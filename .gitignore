@@ -1,0 +1,11 @@
+node_modules
+requests
+processed
+run_lock
+
+config.yaml
+
+*.log
+
+processed.txt
+mycookie

@@ -1,0 +1,17 @@
+counters_storage:
+    type: postgres
+    options:
+        user: username
+        password: password
+        host: localhost
+        port: 5432
+        database: pixel
+
+ledger:
+    type: acronis
+    base_url: http://localhost:8080/api
+    options:
+        user:
+            email: email@example.com
+            accessKey: access
+            accessSecret: secret
