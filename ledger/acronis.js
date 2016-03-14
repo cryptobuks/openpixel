@@ -13,7 +13,7 @@ module.exports = (options, debug_msg, on_error) => {
             query UserJournals {
                 user {
                     email
-                    journal {
+                    journal(name: "") {
                         id
                         name
                         type
