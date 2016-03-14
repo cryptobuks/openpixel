@@ -120,7 +120,10 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
     if (err) throw err;
 
     if (files.length === 0) {
-        return logger.log('No log-files to parse');
+        logger.log('No log-files to parse');
+        logger.log(`Removing run-lock file ${run_lock}`);
+        fs.unlinkSync(run_lock);
+        return exit(0);
     }
 
     logger.log(`Files to be processed: ${files.map((f) => path.basename(f)).join(', ')}`);
