@@ -20,6 +20,11 @@ catch (ex) {
 const endpoints = config.pixel.endpoints;
 
 function check_req(req) {
+    // for haproxy
+    if (req.method === 'HEAD' && req.url === '/') {
+        return true;
+    }
+
     if (req.method !== 'GET') {
         return false;
     }
