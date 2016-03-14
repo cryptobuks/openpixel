@@ -179,7 +179,7 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
             },
             function () {
                 dur = process.hrtime(dur);
-                logger.log(`File ${fname} processed, total_counter = ${JSON.stringify(total_counter)}, ${dur[0]} sec. elapsed`);
+                logger.log(`File ${fname} processed, ${dur[0]} sec. elapsed`);
                 var counters_fname = get_counters_fname(hostname, started_at, ext);
                 dur = process.hrtime();
                 file_reader.write(counters_fname, JSON.stringify(total_counter), function (err) {
