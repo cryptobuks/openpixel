@@ -42,7 +42,7 @@ module.exports = {
             level: 1
         },
         logs_folder: process.argv[2] || './requests',
-        extension: 'log.gz',
+        extension: 'log.1.gz',
         processed_counters_folder: './processed'
     },
 
