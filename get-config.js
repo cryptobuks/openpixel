@@ -47,7 +47,7 @@ else {
 var config = utils.merge(custom, defaults);
 
 config.register.folder = absolutize_path(config.register.folder);
-config.timestamper.logs_folder = absolutize_path(config.timestamper.logs_folder);
+config.timestamper.logs_folder = absolutize_path(process.argv[2] || path.join(config.timestamper.logs_folder, utils.get_ph_folder()));
 config.timestamper.processed_counters_folder = absolutize_path(config.timestamper.processed_counters_folder);
 config.pixel.endpoints = arrayize_object(config.pixel.endpoints);
 config.pixel.cookies.sign_keys = arrayize_object(config.pixel.cookies.sign_keys);

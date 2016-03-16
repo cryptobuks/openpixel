@@ -20,11 +20,6 @@ catch (ex) {
 const endpoints = config.pixel.endpoints;
 
 function check_req(req) {
-    // for haproxy
-    if (req.method === 'HEAD' && req.url === '/') {
-        return true;
-    }
-
     if (req.method !== 'GET') {
         return false;
     }
@@ -55,13 +50,18 @@ else {
 }
 
 http.createServer((req, res) => {
+    // for haproxy
+    if (req.method === 'HEAD' && req.url === '/') {
+        return res.end('1');
+    }
+
     if (check_req(req)) {
         no_cache(res);
         var user = id_user(req, res);
         register.serialize({
-            time: (new Date).toISOString(),
+            time: new Date,
             user: user,
-            req: req
+            req:  req
         });
 
         res.setHeader('Content-Type', 'image/gif');

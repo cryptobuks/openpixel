@@ -70,23 +70,23 @@ module.exports = function (options, debug_msg, on_error) {
                 request(req, function (err, response, body) {
                     if (err) {
                         if (tries <= options.max_tries) {
-                            on_error(`Request failed, will retry (${tries}/${options.max_tries}). Error`, err);
-                            responses.push(err);
+                            on_error(`Request failed (${JSON.stringify(req)}), will retry (${tries}/${options.max_tries}). Error`, err);
+                            responses.push(err.code);
                             return make_request();
                         }
                         else {
-                            on_error(`Request failed, giving up. Error`, err);
+                            on_error(`Request failed (${JSON.stringify(req)}), giving up. Error`, err);
                             return callback(new Error(`${options.max_tries} consecutive errors: ${JSON.stringify(responses)}`), {});
                         }
                     }
                     if (response.statusCode != ok_code) {
                         if (tries <= options.max_tries) {
-                            on_error(`Invalid response status code: expected ${ok_code}, but got ${response.statusCode}, will retry (${tries}/${options.max_tries})`);
+                            on_error(`Invalid response (${JSON.stringify(req)}) status code: expected ${ok_code}, but got ${response.statusCode}, will retry (${tries}/${options.max_tries})`);
                             responses.push(response.statusCode);
                             return make_request();
                         }
                         else {
-                            on_error(`Invalid response status code: expected ${ok_code}, but got ${response.statusCode}, giving up`);
+                            on_error(`Invalid response (${JSON.stringify(req)}) status code: expected ${ok_code}, but got ${response.statusCode}, giving up`);
                             return callback(new Error(`${options.max_tries} consecutive errors: ${JSON.stringify(responses)}`), {});
                         }
                     }

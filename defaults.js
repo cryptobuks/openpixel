@@ -29,10 +29,10 @@ module.exports = {
             level: 1
         },
         folder: './requests',
-        prune_interval: 30*60*1000,
+        prune_interval: 15*60*1000,
         cache_options: {
             max:    5000,
-            maxAge: 60*60*1000
+            maxAge: 30*60*1000
         },
     },
 
@@ -41,8 +41,8 @@ module.exports = {
             name: 'timestamper',
             level: 1
         },
-        logs_folder: process.argv[2] || './requests',
-        extension: 'log.1.gz',
+        logs_folder: './requests',
+        extension: 'log.gz',
         processed_counters_folder: './processed'
     },
 

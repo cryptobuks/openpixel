@@ -13,7 +13,11 @@ const run_lock = path.join(__dirname, '../run_lock');
 
 logger.log('Starting');
 
-function exit(code) {
+function exit(code, rm_run_lock) {
+    if (rm_run_lock) {
+        logger.log(`Removing run-lock file ${run_lock}`);
+        fs.unlinkSync(run_lock);
+    }
     logger.log(`Script completed, exit code = ${code || 0}`);
     process.exit(code || 0);
 }
@@ -117,13 +121,17 @@ if (!should_run()) {
 }
 
 ls(config.timestamper.logs_folder, true, ext, function (err, files) {
-    if (err) throw err;
+    if (err) {
+        if (err.code === 'ENOENT') {
+            logger.error(`Logs folder does not exist ${config.timestamper.logs_folder}`);
+            return exit(2, true);
+        }
+        throw err;
+    }
 
     if (files.length === 0) {
         logger.log('No log-files to parse');
-        logger.log(`Removing run-lock file ${run_lock}`);
-        fs.unlinkSync(run_lock);
-        return exit(0);
+        return exit(0, true);
     }
 
     logger.log(`Files to be processed: ${files.map((f) => path.basename(f)).join(', ')}`);
@@ -139,9 +147,7 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
             if (failed_files.length > 0) {
                 logger.error(`Failed to stamp ${failed_files.length} files`);
             }
-            logger.log(`Removing run-lock file ${run_lock}`);
-            fs.unlinkSync(run_lock);
-            return exit(failed_files.length > 0 ? 1 : 0);
+            return exit(failed_files.length > 0 ? 1 : 0, true);
         }
         i += 1;
         parse_file(files[i], next_file);

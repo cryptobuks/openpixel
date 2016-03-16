@@ -3,6 +3,7 @@ const url = require('fast-url-parser');
 const punycode = require('punycode');
 const crypto = require('crypto');
 const fs = require('fs');
+const path = require('path');
 
 const alphanum_chars = ('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789').split('');
 const hostname_check = /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$/;
@@ -19,8 +20,26 @@ function rm_duplicates(a) {
     return r;
 }
 
+function get_ch_folder(time) {
+    time = (time || new Date).toISOString();
+    return time.substr(0,13).split('-').join('/');
+}
+
+function get_ph_folder(time) {
+    time = time || new Date;
+    time = new Date(time.setHours(time.getHours() - 1));
+    return get_ch_folder(time);
+}
+
+function get_nh_folder(time) {
+    time = time || new Date;
+    time = new Date(time.setHours(time.getHours() + 1));
+    return get_ch_folder(time);
+}
+
 function get_hostname_pathname(full_url) {
     var ret = {
+        original_url: full_url,
         err: null,
         hostname: '',
         pathname: ''
@@ -211,6 +230,42 @@ function fexists(fname, mode) {
     }
 }
 
+function mkdirp(p, callback) {
+    fs.mkdir(p, function (err) {
+        if (!err) return callback(null);
+
+        // already exists
+        if (err.code === 'EEXIST') return callback(null);
+
+        if (err.code === 'ENOENT') {
+            return mkdirp(path.resolve(p, '..'), function (err) {
+                if (!err) return mkdirp(p, callback);
+                return callback(err);
+            });
+        }
+
+        return callback(err);
+    });
+}
+
+function mkdirpSync(p) {
+    try {
+        fs.mkdirSync(p);
+        return null;
+    }
+    catch (err) {
+        // already exists
+        if (err.code === 'EEXIST') return null;
+
+        if (err.code === 'ENOENT') {
+            var err2 = mkdirpSync(path.resolve(p, '..'));
+            if (!err2) mkdirpSync(p);
+            return err2;
+        }
+        return err;
+    }
+}
+
 module.exports = {
     rm_duplicates:         rm_duplicates,
     merge:                 merge,
@@ -220,5 +275,10 @@ module.exports = {
     async_for_each:        async_for_each,
     encrypt_str:           encrypt_str,
     decrypt_str:           decrypt_str,
-    fexists:               fexists
+    fexists:               fexists,
+    mkdirp:                mkdirp,
+    mkdirpSync:            mkdirpSync,
+    get_ch_folder:         get_ch_folder,
+    get_nh_folder:         get_nh_folder,
+    get_ph_folder:         get_ph_folder
 };
