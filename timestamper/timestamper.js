@@ -42,7 +42,7 @@ function ls(dir, ignore_dot, ext, done) {
         }
         var files = [];
         for (let i = 0; i < all_files.length; i++) {
-            if (!all_files[i].startsWith('_no_referer_') && (ignore_dot || all_files[i].startsWith('.')) && (!ext || all_files[i].endsWith(`.${ext}`))) {
+            if ((ignore_dot || all_files[i].startsWith('.')) && (!ext || all_files[i].endsWith(`.${ext}`))) {
                 files.push(path.join(config.timestamper.logs_folder, all_files[i]));
             }
         }
@@ -90,16 +90,24 @@ function parse_line(line) {
         return null;
     }
 
-    if (!data.req.headers.referer) {
-        logger.error(`Skipping incorrect line, missing req.headers.referer. Original line: ${line}`);
-        return null;
-    }
+    // if (!data.req.headers.referer) {
+    //     logger.error(`Skipping incorrect line, missing req.headers.referer. Original line: ${line}`);
+    //     return null;
+    // }
 
-    var hp = utils.get_hostname_pathname(data.req.headers.referer);
-    if (hp.err) {
-        logger.error(`Error occured while trying to get hostname and pathname from referer ${data.req.headers.referer}`, hp.err);
-        return null;
+    if (data.req.headers.referer) {
+        var hp = utils.get_hostname_pathname(data.req.headers.referer);
+        if (hp.err) {
+            logger.error(`Error occured while trying to get hostname and pathname from referer ${data.req.headers.referer}, err:`, hp.err);
+            return null;
+        }
     }
+    else {
+        var hp = {
+            hostname: '_no_referer_',
+            pathname: null
+        }
+    };
 
     return {
         time:     data.time,

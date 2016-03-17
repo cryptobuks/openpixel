@@ -6,7 +6,8 @@ run_lock
 config.yaml
 
 *.log
-
-processed.txt
+*.txt
 mycookie
 test.js
+cron.job
+create.sql
