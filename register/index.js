@@ -140,6 +140,9 @@ module.exports = {
             }
             hostname = parsed.hostname;
         }
+        else {
+            logger.error('Missing referer. Requested by: ' + JSON.stringify(t.req.headers));
+        }
 
         var obj = {
             v:    version,
