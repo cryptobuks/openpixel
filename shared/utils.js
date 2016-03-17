@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 
 const alphanum_chars = ('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789').split('');
-const hostname_check = /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$/;
+const hostname_check = /^(?:[a-z0-9][\w\-]*[a-z0-9]*\.)*(?:(?:(?:[a-z0-9][\w\-]*[a-z0-9]*)(?:\.[a-z0-9]+)?)|(?:(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)))$/;
 
 function rm_duplicates(a) {
     var r = []; // resulting array of uniques
@@ -61,7 +61,7 @@ function get_hostname_pathname(full_url) {
             return ret;
         }
 
-        if (hostname.substr(0, 4) === 'xn--') {
+        if (hostname.substr(0, 4) === 'xn--' || hostname.indexOf('.xn--') > 0) {
             hostname = punycode.toUnicode(hostname);
         }
 
