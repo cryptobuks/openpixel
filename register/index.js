@@ -112,7 +112,7 @@ logger.log('Ensure folder for the next hour exists = ' + nhfname);
 var ens = utils.mkdirpSync(nhfname);
 if (ens) throw ens;
 
-new CronJob('0 50 * * * *', function () {
+new CronJob(Math.floor(Math.random()*59) + ' 50 * * * *', function () {
     var nhfname = path.join(config.folder, utils.get_nh_folder());
     logger.log('****** Create folder for the next hour = ' + nhfname);
     utils.mkdirp(nhfname, (err) => {
