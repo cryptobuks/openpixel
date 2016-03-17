@@ -9,13 +9,7 @@ const fs       = require('fs');
 const path     = require('path');
 const id_user  = require('./id_user');
 
-var gif;
-try {
-    gif = fs.readFileSync(path.join(__dirname, './1x1.gif'));
-}
-catch (ex) {
-    throw ex;
-}
+var gif = fs.readFileSync(path.join(__dirname, './1x1.gif'));
 
 const endpoints = config.pixel.endpoints;
 
@@ -42,7 +36,7 @@ function no_cache(res) {
 var log_404;
 if (config.pixel.log_404_as_error) {
     log_404 = function (req) {
-        logger.error('Invalid endpoint = ' + req.method + ' ' + req.url);
+        logger.error('Invalid endpoint = ' + req.method + ' ' + req.url + ' requested by ' + JSON.stringify(req.headers));
     };
 }
 else {

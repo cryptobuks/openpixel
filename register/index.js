@@ -43,9 +43,34 @@ function serialize_req(req) {
     }
 }
 
-function get_log_fname(time, hostname) {
-    var hf = utils.get_ch_folder(time);
-    return path.join(path.join(config.folder, hf), hostname + '.log');
+function get_log_fname(rel_folder, hostname) {
+    return path.join(path.join(config.folder, rel_folder), hostname + '.log');
+}
+
+/****** Function to cache log folder for the current hour ******/
+var cur_hourstr = utils.get_ch_folder();
+var transition = ( (new Date).getMinutes() >= 58 );
+logger.log('String for the folder of logs = ' + cur_hourstr);
+logger.log('Is transition happening = ' + transition);
+
+new CronJob('0 59 * * * *', function () {
+    logger.log('****** Begin transition');
+    transition = true;
+}, null, true, null, null, null);
+
+new CronJob('0 1 * * * *', function () {
+    logger.log('****** End transition, recalculate string for the folder of logs');
+    cur_hourstr = utils.get_ch_folder();
+    transition = false;
+    logger.log('****** New string for the folder of logs = ' + cur_hourstr);
+}, null, true, null, null, null);
+
+function get_hourstr() {
+    if (transition) {
+        logger.debug('In transitional period recalculate get_ch_folder() each time');
+        return utils.get_ch_folder();
+    }
+    return cur_hourstr;
 }
 
 /****** Cache of file descriptors ******/
@@ -57,7 +82,7 @@ cache_options.dispose = function (key, fd) {
         hostname: key.substr(si+1),
     };
 
-    logger.log('Closing file descriptor on the next tick for (' + key.hostname + ', ' + key.hourstr + '), fd = ' + fd);
+    logger.debug('Closing file descriptor on the next tick for (' + key.hostname + ', ' + key.hourstr + '), fd = ' + fd);
     process.nextTick(function () {
         fs.close(fd, function (err) {
             if (err) {
@@ -78,40 +103,40 @@ setInterval(() => {
 
 /****** Creating folders for logs ******/
 var chfname = path.join(config.folder, utils.get_ch_folder());
-logger.log('Create folder for the current hour = ' + chfname);
+logger.log('Ensure folder for the current hour exists = ' + chfname);
 var ens = utils.mkdirpSync(chfname);
 if (ens) throw ens;
-logger.debug('Folder for the current hour created');
 
 var nhfname = path.join(config.folder, utils.get_nh_folder());
-logger.log('Create folder for the next hour = ' + nhfname);
+logger.log('Ensure folder for the next hour exists = ' + nhfname);
 var ens = utils.mkdirpSync(nhfname);
 if (ens) throw ens;
-logger.debug('Folder for the next hour created');
 
-new CronJob('0 59 * * * *', function () {
-    var phfname = path.join(config.folder, utils.get_nh_folder());
-    logger.log('****** Create folder for the next hour = ' + phfname);
-    utils.mkdirp(phfname, (err) => {
+new CronJob('0 50 * * * *', function () {
+    var nhfname = path.join(config.folder, utils.get_nh_folder());
+    logger.log('****** Create folder for the next hour = ' + nhfname);
+    utils.mkdirp(nhfname, (err) => {
         if (err) {
-            return logger.error('****** Could not create folder for the next hour, err: ', err);
+            logger.error('****** Could not create folder for the next hour, err: ', err);
+            throw err;
         }
         return logger.debug('****** Folder for the next hour created');
     });
 }, null, true, null, null, null);
 
 module.exports = {
+
     serialize: (t) => {
         if (!t.req || !t.req.headers) {
             return logger.error('Missing req object or req.headers');
         }
 
         var hostname = '_no_referer_';
-        var hourstr  = utils.get_ch_folder(t.time);
+        var hourstr = get_hourstr();
         if (t.req.headers.referer) {
             let parsed = utils.get_hostname_pathname(t.req.headers.referer);
             if (parsed.err || !parsed.hostname) {
-                return logger.error('Error parsing referer ' + parsed.original_url + ' , err:', parsed.err)
+                return logger.error('Error parsing referer ' + parsed.original_url + ' requested by ' + JSON.stringify(t.req.headers) + ', err:', parsed.err)
             }
             hostname = parsed.hostname;
         }
@@ -125,8 +150,8 @@ module.exports = {
 
         var fd = hosts.get(hourstr + '|' + hostname);
         if (!fd) {
-            var fname = get_log_fname(t.time, hostname);
-            logger.log('Opening file descriptor for (' + hostname + ', ' + hourstr + ') at ' + fname);
+            var fname = get_log_fname(hourstr, hostname);
+            logger.debug('Opening file descriptor for (' + hostname + ', ' + hourstr + ') at ' + fname);
             fs.open(fname, 'a', function (err, fd) {
                 if (err) {
                     return logger.error('Could not open file descriptor for (' + hostname + ', ' + hourstr + ' at ' + fname + ', err:', err);
@@ -140,5 +165,6 @@ module.exports = {
             append_to_fd(fd, obj, hostname, hourstr, (err) => {});
         }
     }
+
 };
 

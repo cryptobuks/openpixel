@@ -69,25 +69,25 @@ module.exports = function (options, debug_msg, on_error) {
                 tries += 1;
                 request(req, function (err, response, body) {
                     if (err) {
-                        if (tries <= options.max_tries) {
+                        responses.push(err.code);
+                        if (tries < options.max_tries) {
                             on_error(`Request failed (${JSON.stringify(req)}), will retry (${tries}/${options.max_tries}). Error`, err);
-                            responses.push(err.code);
                             return make_request();
                         }
                         else {
                             on_error(`Request failed (${JSON.stringify(req)}), giving up. Error`, err);
-                            return callback(new Error(`${options.max_tries} consecutive errors: ${JSON.stringify(responses)}`), {});
+                            return callback(new Error(`${options.max_tries} consecutive errors: ${responses.join(', ')}`), {});
                         }
                     }
                     if (response.statusCode != ok_code) {
-                        if (tries <= options.max_tries) {
+                        responses.push(response.statusCode);
+                        if (tries < options.max_tries) {
                             on_error(`Invalid response (${JSON.stringify(req)}) status code: expected ${ok_code}, but got ${response.statusCode}, will retry (${tries}/${options.max_tries})`);
-                            responses.push(response.statusCode);
                             return make_request();
                         }
                         else {
                             on_error(`Invalid response (${JSON.stringify(req)}) status code: expected ${ok_code}, but got ${response.statusCode}, giving up`);
-                            return callback(new Error(`${options.max_tries} consecutive errors: ${JSON.stringify(responses)}`), {});
+                            return callback(new Error(`${options.max_tries} consecutive errors: ${responses.join(', ')}`), {});
                         }
                     }
                     debug_msg(`Got successfull response, body: ${JSON.stringify(body)}`);

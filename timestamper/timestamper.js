@@ -14,12 +14,13 @@ const run_lock = path.join(__dirname, '../run_lock');
 logger.log('Starting');
 
 function exit(code, rm_run_lock) {
+    code = code || 0;
     if (rm_run_lock) {
         logger.log(`Removing run-lock file ${run_lock}`);
         fs.unlinkSync(run_lock);
     }
-    logger.log(`Script completed, exit code = ${code || 0}`);
-    process.exit(code || 0);
+    logger.log(`Script exits, code = ${code}`);
+    process.exit(code);
 }
 
 function should_run() {
@@ -141,6 +142,10 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
     function next_file(err) {
         if (err) {
             logger.error(`Skipping file ${files[i]}`);
+            if (config.timestamper.max_failed_files != null && failed_files.length > config.timestamper.max_failed_files) {
+                logger.error(`Too many files were failed to stamp (max ${config.timestamper.max_failed_files}), exiting`);
+                return exit(1, true);
+            }
         }
         if (i >= files.length - 1) {
             logger.log(`Completed processing files. Total files process: ${files.length}, failed to stamp: ${failed_files.length}`);
