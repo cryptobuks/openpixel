@@ -105,7 +105,7 @@ function parse_line(line) {
     else {
         var hp = {
             hostname: '_no_referer_',
-            pathname: null
+            pathname: ''
         }
     };
 
