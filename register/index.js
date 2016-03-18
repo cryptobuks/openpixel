@@ -65,10 +65,10 @@ new CronJob('0 1 * * * *', function () {
     logger.log('****** New string for the folder of logs = ' + cur_hourstr);
 }, null, true, null, null, null);
 
-function get_hourstr() {
+function get_hourstr(time) {
     if (transition) {
         logger.debug('In transitional period recalculate get_ch_folder() each time');
-        return utils.get_ch_folder();
+        return utils.get_ch_folder(time);
     }
     return cur_hourstr;
 }
@@ -132,7 +132,7 @@ module.exports = {
         }
 
         var hostname = '_no_referer_';
-        var hourstr = get_hourstr();
+        var hourstr = get_hourstr(t.time);
         if (t.req.headers.referer) {
             let parsed = utils.get_hostname_pathname(t.req.headers.referer);
             if (parsed.err || !parsed.hostname) {
