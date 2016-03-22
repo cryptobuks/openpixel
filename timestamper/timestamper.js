@@ -167,7 +167,7 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
     }
 
     function parse_file(fname, next_file) {
-        var ffi = failed_files.push(fname) - 1;
+        failed_files.push(fname);
         var hostname = get_hostname(fname, ext);
         logger.log(`Trying to parse logs of ${hostname} (file = ${fname})`);
         var total_counter = {};
@@ -224,6 +224,7 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
                             }
                             dur = process.hrtime(dur);
                             logger.log(`Successfully stamped ${hostname} in ledger, ${dur[0]} sec. elapsed`);
+                            var ffi = failed_files.indexOf(fname);
                             failed_files.splice(ffi, 1);
                             return next_file();
                         });
