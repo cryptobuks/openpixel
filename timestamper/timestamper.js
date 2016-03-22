@@ -11,7 +11,7 @@ const ledger = require('../ledger');
 
 const run_lock = path.join(__dirname, '../run_lock');
 
-logger.log('Starting');
+logger.log('Starting, pid = ' + process.pid);
 
 function exit(code, rm_run_lock) {
     code = code || 0;
@@ -237,4 +237,9 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
     }
 
     parse_file(files[0], next_file);
+    parse_file(files[1], next_file);
+    parse_file(files[2], next_file);
+    parse_file(files[3], next_file);
+    parse_file(files[4], next_file);
+    i = 4;
 });

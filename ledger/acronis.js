@@ -48,9 +48,12 @@ module.exports = (options, debug_msg, on_error) => {
                         if (err) return done(err);
                         api.commit_record(journal, record, (err) => {
                             if (err) return done(err);
+                            done();
+                            /*
                             api.timestamp_journal(journal, (err) => {
                                 done(err);
                             });
+                            */
                         });
                     });
                 });
