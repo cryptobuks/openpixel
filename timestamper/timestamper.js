@@ -235,9 +235,11 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
     }
 
     parse_file(files[0], next_file);
+    /*
     parse_file(files[1], next_file);
     parse_file(files[2], next_file);
     parse_file(files[3], next_file);
     parse_file(files[4], next_file);
     i = 4;
+    */
 });
