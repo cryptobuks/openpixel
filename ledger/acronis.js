@@ -40,6 +40,8 @@ module.exports = (options, debug_msg, on_error) => {
                 counters_file: counters_file
             };
 
+            done();
+            /*
             api.add_fingerprint(fp, record, (err) => {
                 if (err) return done(err);
                 api.add_file(register_file, record, (err) => {
@@ -48,17 +50,14 @@ module.exports = (options, debug_msg, on_error) => {
                         if (err) return done(err);
                         api.commit_record(journal, record, (err) => {
                             if (err) return done(err);
-                            done();
-                            /*
                             api.timestamp_journal(journal, (err) => {
                                 done(err);
                             });
-                            */
                         });
                     });
                 });
             });
-
+            */
         });
     }
 
