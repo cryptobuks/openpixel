@@ -151,16 +151,14 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
         if (err) {
             logger.error(`Skipping file ${files[i]}`);
             if (config.timestamper.max_failed_files != null && failed_files.length > config.timestamper.max_failed_files) {
-                logger.error(`Too many files were failed to stamp (max ${config.timestamper.max_failed_files}), exiting`);
-                logger.debug(`Files failed to be timestamped: ${failed_files.map((f) => path.basename(f)).join(', ')}`);
+                logger.error(`Too many files were failed to stamp (max ${config.timestamper.max_failed_files}): ${failed_files.map((f) => path.basename(f)).join(', ')}`);
                 return exit(1, true);
             }
         }
         if (i >= files.length - 1) {
             logger.log(`Completed processing files. Total files process: ${files.length}, failed to stamp: ${failed_files.length}`);
             if (failed_files.length > 0) {
-                logger.error(`Failed to stamp ${failed_files.length} files`);
-                logger.debug(`Files failed to be timestamped: ${failed_files.map((f) => path.basename(f)).join(', ')}`);
+                logger.error(`Failed to stamp ${failed_files.length} files: ${failed_files.map((f) => path.basename(f)).join(', ')}`);
             }
             return exit(failed_files.length > 0 ? 1 : 0, true);
         }
