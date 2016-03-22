@@ -24,15 +24,23 @@ module.exports = function (options, debug_msg, on_disconnect, on_error) {
             else {
                 var h = key_data.req_time.substr(0, 13);
             }
+            var qid = +(new Date);
             params = [h, key_data.hostname, key_data.pathname, key_data.val != null ? key_data.val : 1];
+            debug_msg(`Running insert_query with id = ${qid} and params = ${JSON.stringify(params)}`);
             pg.connect(options, function (err, client, pgdone) {
                 if (err) {
+                    on_error(`Error running query ${qid}`, err);
                     return done(err);
                 }
 
                 client.query(insert_query, params, function (err, result) {
                     pgdone();
-                    return done(err);
+                    if (err) {
+                        on_error(`Query ${qid} completed with errors`, err);
+                        return done(err);
+                    }
+                    debug_msg(`Query ${qid} completed successfully`);
+                    return done();
                 });
 
             });

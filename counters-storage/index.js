@@ -60,6 +60,8 @@ function default_incr_by_json(storage) {
         }
 
         var times = Object.keys(json);
+        debug_msg(`Calling default_incr_by_json() with json = ${JSON.stringify(json)}`);
+
         if (times.length === 0) {
             return done();
         }
