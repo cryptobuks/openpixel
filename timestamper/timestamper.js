@@ -46,6 +46,15 @@ function ls(dir, ignore_dot, ext, done) {
                 files.push(path.join(config.timestamper.logs_folder, all_files[i]));
             }
         }
+        files = files
+            .map((fn) => {
+                return {
+                    name: fn,
+                    size: fs.statSync(fn).size
+                };
+            })
+            .sort((fo1, fo2) => fo2.size - fo1.size)
+            .map((fo) => fo.name);
         done(null, files);
     });
 }
