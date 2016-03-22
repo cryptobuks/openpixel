@@ -15,7 +15,7 @@ function on_error(msg, err) {
     logger.error(`${msg}:`, err);
 }
 
-const storage = require(`./${config.type}`)(config.options);
+const storage = require(`./${config.type}`)(config.options, debug_msg, on_disconnect, on_error);
 
 
 /*
