@@ -151,7 +151,6 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
     var p = 0;       // processed files counter
 
     function next_file(err) {
-        console.log(`next file, i = ${i}, p = ${p}`);
         if (err) {
             logger.error(`Skipping file ${files[i]}`);
             if (config.timestamper.max_failed_files != null && failed_files.length > config.timestamper.max_failed_files) {
@@ -170,7 +169,7 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
         else {
             p += 1;
             if (i >= files.length - 1) {
-                logger.debug(`No new files to be processed, but awaiting ${files.length - p} more files to finish processing`);
+                logger.log(`No new files to be processed, but awaiting ${files.length - p} more files to finish processing`);
             }
             else {
                 i += 1;
