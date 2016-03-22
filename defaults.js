@@ -41,6 +41,7 @@ module.exports = {
             name: 'timestamper',
             level: 1
         },
+        concurrent_files: 1,
         max_failed_files: null,
         logs_folder: './requests',
         extension: 'log.gz',

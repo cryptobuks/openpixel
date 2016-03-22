@@ -145,9 +145,13 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
 
     logger.log(`Files to be processed: ${files.map((f) => path.basename(f)).join(', ')}`);
 
-    var i = 0; // files counter
+    const ccf = Math.min(files.length, config.timestamper.concurrent_files);
+    logger.log(`Will process ${ccf} files concurrently`);
+    var i = ccf - 1; // files counter
+    var p = 0;       // processed files counter
 
     function next_file(err) {
+        console.log(`next file, i = ${i}, p = ${p}`);
         if (err) {
             logger.error(`Skipping file ${files[i]}`);
             if (config.timestamper.max_failed_files != null && failed_files.length > config.timestamper.max_failed_files) {
@@ -155,15 +159,24 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
                 return exit(1, true);
             }
         }
-        if (i >= files.length - 1) {
+
+        if (p >= files.length - 1) {
             logger.log(`Completed processing files. Total files process: ${files.length}, failed to stamp: ${failed_files.length}`);
             if (failed_files.length > 0) {
                 logger.error(`Failed to stamp ${failed_files.length} files: ${failed_files.map((f) => path.basename(f)).join(', ')}`);
             }
             return exit(failed_files.length > 0 ? 1 : 0, true);
         }
-        i += 1;
-        parse_file(files[i], next_file);
+        else {
+            p += 1;
+            if (i >= files.length - 1) {
+                logger.debug(`No new files to be processed, but awaiting ${files.length - p} more files to finish processing`);
+            }
+            else {
+                i += 1;
+                parse_file(files[i], next_file);
+            }
+        }
     }
 
     function parse_file(fname, next_file) {
@@ -234,12 +247,9 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
         );
     }
 
-    parse_file(files[0], next_file);
-    /*
-    parse_file(files[1], next_file);
-    parse_file(files[2], next_file);
-    parse_file(files[3], next_file);
-    parse_file(files[4], next_file);
-    i = 4;
-    */
+    // opening first bunch of files
+    for (let ccfi = 0; ccfi < ccf; ccfi++) {
+        parse_file(files[ccfi], next_file);
+    }
+
 });
