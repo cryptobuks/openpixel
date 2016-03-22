@@ -167,11 +167,11 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
     }
 
     function parse_file(fname, next_file) {
-        failed_files.push(fname);
+        var ffi = failed_files.push(fname) - 1;
         var hostname = get_hostname(fname, ext);
         logger.log(`Trying to parse logs of ${hostname} (file = ${fname})`);
         var total_counter = {};
-        let dur = process.hrtime();
+        var dur = process.hrtime();
         file_reader.read_by_line(fname,
             function (err) {
                 logger.error(`Error reading line from file = ${fname}, err:`, err);
@@ -224,7 +224,7 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
                             }
                             dur = process.hrtime(dur);
                             logger.log(`Successfully stamped ${hostname} in ledger, ${dur[0]} sec. elapsed`);
-                            failed_files.pop();
+                            failed_files.splice(ffi, 1);
                             return next_file();
                         });
                     });
