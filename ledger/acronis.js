@@ -40,8 +40,6 @@ module.exports = (options, debug_msg, on_error) => {
                 counters_file: counters_file
             };
 
-            done();
-            /*
             api.add_fingerprint(fp, record, (err) => {
                 if (err) return done(err);
                 api.add_file(register_file, record, (err) => {
@@ -57,12 +55,12 @@ module.exports = (options, debug_msg, on_error) => {
                     });
                 });
             });
-            */
         });
     }
 
     return {
         stamp: function (journal_name, register_file, counters_file, done) {
+            return done();
             get_ts_journals(function (err, journals) {
                 if (err) {
                     return done(err);
