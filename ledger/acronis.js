@@ -49,11 +49,9 @@ module.exports = (options, debug_msg, on_error) => {
                         api.commit_record(journal, record, (err) => {
                             if (err) return done(err);
                             //return done();
-
                             api.timestamp_journal(journal, (err) => {
                                 done(err);
                             });
-
                         });
                     });
                 });
@@ -63,7 +61,7 @@ module.exports = (options, debug_msg, on_error) => {
 
     return {
         stamp: function (journal_name, register_file, counters_file, done) {
-            // return done();
+            return done();
             get_ts_journals(function (err, journals) {
                 if (err) {
                     return done(err);
