@@ -6,12 +6,10 @@ const OS     = require('os');
 const config = require('../get-config');
 const logger = require('../shared/logger')(config.timestamper.logger);
 const utils  = require('../shared/utils');
-const counters_storage = require('../counters-storage');
-const ledger = require('../ledger');
-
-const run_lock = path.join(__dirname, '../run_lock');
 
 logger.log('Starting, pid = ' + process.pid);
+
+const run_lock = path.join(__dirname, '../run_lock');
 
 function exit(code, rm_run_lock) {
     code = code || 0;
@@ -127,16 +125,20 @@ function parse_line(line) {
 
 // --------- MAIN ----------- //
 
+if (!should_run()) {
+    return exit(2);
+}
+
 const ext = config.timestamper.extension || 'log';
 logger.log(`Using reader for extension .${ext} on files in folder ${config.timestamper.logs_folder}`);
 const file_reader = require('./reader')(ext);
 
-const started_at = (new Date).toISOString().substr(0,13);
-var failed_files = [];
+const counters_storage = require('../counters-storage');
+const ledger = require('../ledger');
 
-if (!should_run()) {
-    return exit(2);
-}
+const started_at = (new Date).toISOString().substr(0,13);
+
+var failed_files = [];
 
 ls(config.timestamper.logs_folder, true, ext, function (err, files) {
     if (err) {
@@ -158,18 +160,19 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
     logger.log(`Will process ${ccf} files concurrently`);
     var i = ccf - 1; // files counter
     var p = 0;       // processed files counter
+    var too_many_failed = false;
 
-    function next_file(err) {
+    function next_file(fname, err) {
         if (err) {
-            logger.error(`Skipping file ${files[i]}`);
+            logger.error(`Skipping file ${fname}`);
+            failed_files.push(fname);
             if (config.timestamper.max_failed_files != null && failed_files.length > config.timestamper.max_failed_files) {
-                logger.error(`Too many files were failed to stamp (max ${config.timestamper.max_failed_files}): ${failed_files.map((f) => path.basename(f)).join(', ')}`);
-                return exit(1, true);
+                too_many_failed = true;
+                logger.error(`Too many files failed to be stamped (max ${config.timestamper.max_failed_files})`);
             }
         }
-
-        if (p >= files.length - 1) {
-            logger.log(`Completed processing files. Total files process: ${files.length}, failed to stamp: ${failed_files.length}`);
+        if (too_many_failed && p >= i || p >= files.length - 1) {
+            logger.log(`Completed processing files. Total files process: ${i+1}, failed to stamp: ${failed_files.length}`);
             if (failed_files.length > 0) {
                 logger.error(`Failed to stamp ${failed_files.length} files: ${failed_files.map((f) => path.basename(f)).join(', ')}`);
             }
@@ -177,8 +180,8 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
         }
         else {
             p += 1;
-            if (i >= files.length - 1) {
-                logger.log(`No new files to be processed, but awaiting ${files.length - p} more files to finish processing`);
+            if (too_many_failed || i >= files.length - 1) {
+                logger.log(`No new files to be processed, but awaiting ${i+1 - p} more files to finish processing`);
             }
             else {
                 i += 1;
@@ -188,15 +191,14 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
     }
 
     function parse_file(fname, next_file) {
-        failed_files.push(fname);
         var hostname = get_hostname(fname, ext);
-        logger.log(`Trying to parse logs of ${hostname} (file = ${fname})`);
+        logger.log(`Trying to parse logs of ${hostname} from ${fname}`);
         var total_counter = {};
         var dur = process.hrtime();
         file_reader.read_by_line(fname,
             function (err) {
                 logger.error(`Error reading line from file = ${fname}, err:`, err);
-                return next_file(err);
+                return next_file(fname, err);
             },
             function (line) {
                 logger.debug(`Trying to parse line = ${line}`);
@@ -219,35 +221,34 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
             },
             function () {
                 dur = process.hrtime(dur);
-                logger.log(`File ${fname} processed, ${dur[0]} sec. elapsed`);
+                logger.log(`File for ${hostname} processed, ${utils.hrt2sec(dur)} sec. elapsed`);
                 var counters_fname = get_counters_fname(hostname, started_at, ext);
                 dur = process.hrtime();
                 file_reader.write(counters_fname, JSON.stringify(total_counter), function (err) {
                     if (err) {
-                        logger.error(`Could not save counters file = ${counters_fname}, err:`, err);
-                        return next_file(err);
+                        logger.error(`Could not save counters file for ${hostname} in ${counters_fname}, err:`, err);
+                        return next_file(fname, err);
                     }
                     dur = process.hrtime(dur);
-                    logger.log(`Counters files ${counters_fname} saved, ${dur[0]} sec. elapsed`);
+                    logger.log(`Counters file saved for ${hostname} in ${counters_fname}, ${utils.hrt2sec(dur)} sec. elapsed`);
                     dur = process.hrtime();
                     counters_storage.incr_by_json(total_counter, function (err) {
                         if (err) {
-                            logger.error(`Error updating counters in storage for file = ${fname}:`, err);
-                            return next_file(err);
+                            logger.error(`Error updating counters in storage for ${hostname}:`, err);
+                            return next_file(fname, err);
                         }
                         dur = process.hrtime(dur);
-                        logger.log(`Counters updated in storage for file = ${fname}, ${dur[0]} sec. elapsed`);
+                        logger.log(`Storage updated for ${hostname}, ${utils.hrt2sec(dur)} sec. elapsed`);
                         dur = process.hrtime();
                         ledger.stamp(`Pixel data for ${hostname}`, fname, counters_fname, function (err) {
                             if (err) {
-                                logger.error('Failed to stamp in ledger, err:', err);
-                                return next_file(err);
+                                logger.error(`Failed to stamp ${hostname} in ledger, err:`, err);
+                                return next_file(fname, err);
                             }
                             dur = process.hrtime(dur);
-                            logger.log(`Successfully stamped ${hostname} in ledger, ${dur[0]} sec. elapsed`);
-                            var ffi = failed_files.indexOf(fname);
-                            failed_files.splice(ffi, 1);
-                            return next_file();
+                            logger.log(`Stamped ${hostname} in ledger, ${utils.hrt2sec(dur)} sec. elapsed`);
+                            logger.log(`Done with logs for ${hostname}`);
+                            return next_file(fname);
                         });
                     });
                 });

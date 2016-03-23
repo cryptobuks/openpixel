@@ -266,6 +266,11 @@ function mkdirpSync(p) {
     }
 }
 
+function hrt2sec(hr, p) {
+    p = (p == null ? 1 : p);
+    return (hr[0] + hr[1]/1e9).toFixed(p);
+}
+
 module.exports = {
     rm_duplicates:         rm_duplicates,
     merge:                 merge,
@@ -280,5 +285,6 @@ module.exports = {
     mkdirpSync:            mkdirpSync,
     get_ch_folder:         get_ch_folder,
     get_nh_folder:         get_nh_folder,
-    get_ph_folder:         get_ph_folder
+    get_ph_folder:         get_ph_folder,
+    hrt2sec:               hrt2sec
 };

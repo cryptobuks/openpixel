@@ -15,6 +15,7 @@ function on_error(msg, err) {
     logger.error(`${msg}:`, err);
 }
 
+logger.log(`Using counters storage ${config.type}`);
 const storage = require(`./${config.type}`)(config.options, debug_msg, on_disconnect, on_error);
 
 
