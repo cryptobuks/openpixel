@@ -172,7 +172,7 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
             }
         }
         if (too_many_failed && p >= i || p >= files.length - 1) {
-            logger.log(`Completed processing files. Total files process: ${i+1}, failed to stamp: ${failed_files.length}`);
+            logger.log(`Completed processing files. Total files processed: ${i+1}, failed to stamp: ${failed_files.length}`);
             if (failed_files.length > 0) {
                 logger.error(`Failed to stamp ${failed_files.length} files: ${failed_files.map((f) => path.basename(f)).join(', ')}`);
             }
