@@ -19,7 +19,7 @@ function exit(code, rm_run_lock) {
         fs.unlinkSync(run_lock);
     }
     tdur = process.hrtime(tdur);
-    logger.log(`Script exits, code = ${code}. Total ${utils.hrt2sec(tdur)} sec. elapsed`);
+    logger.log(`Script exits, code = ${code}. Total ${utils.hrt2sec(tdur)} elapsed`);
     process.exit(code);
 }
 
@@ -173,7 +173,7 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
                 logger.error('Error stamping the files:', err);
                 return exit(1, true);
             }
-            logger.log(`Files were successfully stamped in ledger, journal_id = ${journal.id}, ${utils.hrt2sec(dur)} sec. elapsed`);
+            logger.log(`Files were successfully stamped in ledger, journal_id = ${journal.id}, ${utils.hrt2sec(dur)} elapsed`);
             dur = process.hrtime();
             counters_storage.acknowledge_stamp(journal.id, function (err) {
                 if (err) {
@@ -181,7 +181,7 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
                     return exit(1, true);
                 }
                 dur = process.hrtime(dur);
-                logger.log(`Files were successfully stamped in counters storage, ${utils.hrt2sec(dur)} sec. elapsed`);
+                logger.log(`Files were successfully stamped in counters storage, ${utils.hrt2sec(dur)} elapsed`);
                 return exit(failed_files.length > 0 ? 1 : 0, true);
             });
         });
@@ -250,7 +250,7 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
             },
             function () {
                 dur = process.hrtime(dur);
-                logger.log(`File for ${hostname} processed, ${utils.hrt2sec(dur)} sec. elapsed`);
+                logger.log(`File for ${hostname} processed, ${utils.hrt2sec(dur)} elapsed`);
                 var counters_fname = get_counters_fname(hostname, ext);
                 dur = process.hrtime();
                 file_reader.write(counters_fname, JSON.stringify(total_counter), function (err) {
@@ -259,7 +259,7 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
                         return next_file(fname, err);
                     }
                     dur = process.hrtime(dur);
-                    logger.log(`Counters file saved for ${hostname} in ${counters_fname}, ${utils.hrt2sec(dur)} sec. elapsed`);
+                    logger.log(`Counters file saved for ${hostname} in ${counters_fname}, ${utils.hrt2sec(dur)} elapsed`);
 
                     dur = process.hrtime();
                     ledger.add(journal, fname, counters_fname, function (err, rest) {
@@ -268,7 +268,7 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
                             return next_file(fname, err);
                         }
                         dur = process.hrtime(dur);
-                        logger.log(`Added ${hostname} to ledger, ${utils.hrt2sec(dur)} sec. elapsed`);
+                        logger.log(`Added ${hostname} to ledger, ${utils.hrt2sec(dur)} elapsed`);
 
                         dur = process.hrtime();
                         counters_storage.incr_by_json(total_counter, function (err) {
@@ -277,7 +277,7 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
                                 return next_file(fname, err);
                             }
                             dur = process.hrtime(dur);
-                            logger.log(`Storage updated for ${hostname}, ${utils.hrt2sec(dur)} sec. elapsed`);
+                            logger.log(`Storage updated for ${hostname}, ${utils.hrt2sec(dur)} elapsed`);
 
                             dur = process.hrtime();
                             counters_storage.save_ledger_data(log_time, hostname, journal.id, rest, function (err) {

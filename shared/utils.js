@@ -268,7 +268,23 @@ function mkdirpSync(p) {
 
 function hrt2sec(hr, p) {
     p = (p == null ? 1 : p);
-    return (hr[0] + hr[1]/1e9).toFixed(p);
+
+    var r = hr[0];
+    var h = Math.floor(hr[0]/(60*60));
+    r = r - 60*60*h;
+    var m = Math.floor(r/60);
+    r = r - 60*m;
+    var s = r;
+
+    var str = '';
+    if (h > 0) {
+        str += h + ' hr. ';
+    }
+    if (m > 0) {
+        str += m + ' min. ';
+    }
+    str += (r + hr[1]/1e9).toFixed(p) + ' sec.';
+    return str;
 }
 
 module.exports = {
