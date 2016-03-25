@@ -15,9 +15,8 @@ function on_error(msg, err) {
     logger.error(`${msg}:`, err);
 }
 
-logger.log(`Using counters storage ${config.type}`);
+logger.log(`Using counters storage: ${config.type}`);
 const storage = require(`./${config.type}`)(config.options, debug_msg, on_disconnect, on_error);
-
 
 /*
     In incr_by_json, parameter "json" should have the following structure:
@@ -91,7 +90,9 @@ function default_incr_by_json(storage) {
 }
 
 module.exports = {
-    init:         storage.init,
-    incr:         storage.incr,
-    incr_by_json: storage.incr_by_json || default_incr_by_json(storage)
+    init:              storage.init,
+    incr:              storage.incr,
+    incr_by_json:      storage.incr_by_json || default_incr_by_json(storage),
+    save_ledger_data:  storage.save_ledger_data,
+    acknowledge_stamp: storage.acknowledge_stamp
 };

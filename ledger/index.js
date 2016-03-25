@@ -10,7 +10,11 @@ function on_error(msg, err) {
     logger.error(`${msg}:`, err);
 }
 
-logger.log(`Using ledger ${config.type}`);
+logger.log(`Using ledger: ${config.type}`);
 const ledger = require(`./${config.type}`)(config.options, debug_msg, on_error);
 
-module.exports = ledger;
+module.exports = {
+    open:  ledger.open,
+    add:   ledger.add,
+    stamp: ledger.stamp
+};
