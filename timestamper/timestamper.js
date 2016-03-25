@@ -8,6 +8,7 @@ const logger = require('../shared/logger')(config.timestamper.logger);
 const utils  = require('../shared/utils');
 
 logger.log('Starting, pid = ' + process.pid);
+var tdur = process.hrtime();
 
 const run_lock = path.join(__dirname, '../run_lock');
 
@@ -17,7 +18,8 @@ function exit(code, rm_run_lock) {
         logger.log(`Removing run-lock file ${run_lock}`);
         fs.unlinkSync(run_lock);
     }
-    logger.log(`Script exits, code = ${code}`);
+    tdur = process.hrtime(tdur);
+    logger.log(`Script exits, code = ${code}. Total ${utils.hrt2sec(tdur)} sec. elapsed`);
     process.exit(code);
 }
 
@@ -163,19 +165,23 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
     var log_time;
 
     function stamp() {
-        logger.log('Trying to stamp successfully processed files');
+        logger.log('Stamping successfully processed files');
+        var dur = process.hrtime();
         ledger.stamp(journal, function (err) {
+            dur = process.hrtime(dur);
             if (err) {
                 logger.error('Error stamping the files:', err);
                 return exit(1, true);
             }
-            logger.log('Files were successfully stamped in ledger, journal_id = ' + journal.id);
+            logger.log(`Files were successfully stamped in ledger, journal_id = ${journal.id}, ${utils.hrt2sec(dur)} sec. elapsed`);
+            dur = process.hrtime();
             counters_storage.acknowledge_stamp(journal.id, function (err) {
                 if (err) {
                     logger.error();
                     return exit(1, true);
                 }
-                logger.log('Files were successfully stamped in counters storage');
+                dur = process.hrtime(dur);
+                logger.log(`Files were successfully stamped in counters storage, ${utils.hrt2sec(dur)} sec. elapsed`);
                 return exit(failed_files.length > 0 ? 1 : 0, true);
             });
         });
