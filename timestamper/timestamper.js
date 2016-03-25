@@ -169,7 +169,7 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
                 logger.error('Error stamping the files:', err);
                 return exit(1, true);
             }
-            logger.log('Files were successfully stamped in ledger');
+            logger.log('Files were successfully stamped in ledger, journal_id = ' + journal.id);
             counters_storage.acknowledge_stamp(journal.id, function (err) {
                 if (err) {
                     logger.error();
@@ -279,6 +279,8 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
                                     logger.error(`Error saving ledger data for ${hostname}:`, err);
                                     return next_file(fname, err);
                                 }
+                                logger.log(`Ledger data saved for ${hostname}`);
+
                                 logger.log(`Done with logs for ${hostname}`);
                                 return next_file(fname);
                             });
