@@ -176,11 +176,11 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
             logger.log(`Files were successfully stamped in ledger, journal_id = ${journal.id}, ${utils.hrt2sec(dur)} elapsed`);
             dur = process.hrtime();
             counters_storage.acknowledge_stamp(journal.id, function (err) {
+                dur = process.hrtime(dur);
                 if (err) {
                     logger.error();
                     return exit(1, true);
                 }
-                dur = process.hrtime(dur);
                 logger.log(`Files were successfully stamped in counters storage, ${utils.hrt2sec(dur)} elapsed`);
                 return exit(failed_files.length > 0 ? 1 : 0, true);
             });
@@ -219,6 +219,7 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
         var hostname = get_hostname(fname, ext);
         logger.log(`Trying to parse logs of ${hostname} from ${fname}`);
         var total_counter = {};
+        var fdur = process.hrtime();
         var dur = process.hrtime();
         file_reader.read_by_line(fname,
             function (err) {
@@ -254,40 +255,41 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
                 var counters_fname = get_counters_fname(hostname, ext);
                 dur = process.hrtime();
                 file_reader.write(counters_fname, JSON.stringify(total_counter), function (err) {
+                    dur = process.hrtime(dur);
                     if (err) {
                         logger.error(`Could not save counters file for ${hostname} in ${counters_fname}, err:`, err);
                         return next_file(fname, err);
                     }
-                    dur = process.hrtime(dur);
                     logger.log(`Counters file saved for ${hostname} in ${counters_fname}, ${utils.hrt2sec(dur)} elapsed`);
 
                     dur = process.hrtime();
                     ledger.add(journal, fname, counters_fname, function (err, rest) {
+                        dur = process.hrtime(dur);
                         if (err) {
                             logger.error(`Failed to add ${hostname} to ledger, err:`, err);
                             return next_file(fname, err);
                         }
-                        dur = process.hrtime(dur);
                         logger.log(`Added ${hostname} to ledger, ${utils.hrt2sec(dur)} elapsed`);
 
                         dur = process.hrtime();
                         counters_storage.incr_by_json(total_counter, function (err) {
+                            dur = process.hrtime(dur);
                             if (err) {
                                 logger.error(`Error updating counters in storage for ${hostname}:`, err);
                                 return next_file(fname, err);
                             }
-                            dur = process.hrtime(dur);
                             logger.log(`Storage updated for ${hostname}, ${utils.hrt2sec(dur)} elapsed`);
 
                             dur = process.hrtime();
                             counters_storage.save_ledger_data(log_time, hostname, journal.id, rest, function (err) {
+                                dur = process.hrtime(dur);
                                 if (err) {
                                     logger.error(`Error saving ledger data for ${hostname}:`, err);
                                     return next_file(fname, err);
                                 }
-                                logger.log(`Ledger data saved for ${hostname}`);
-
-                                logger.log(`Done with logs for ${hostname}`);
+                                logger.log(`Ledger data saved for ${hostname}, ${utils.hrt2sec(dur)} elapsed`);
+                                fdur = process.hrtime(fdur);
+                                logger.log(`Done with logs for ${hostname}, ${utils.hrt2sec(fdur)} elapsed`);
                                 return next_file(fname);
                             });
                         });
