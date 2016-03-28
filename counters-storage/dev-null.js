@@ -20,6 +20,11 @@ module.exports = function (options, debug_msg, on_disconnect, on_error) {
         acknowledge_stamp: function (journal_id, done) {
             debug_msg('dev-null.acknowledge_stamp() called with journal_id = ' + journal_id);
             return done();
+        },
+
+        set_txid: function (journal_id, txid, done) {
+            debug_msg('dev-null.set_txid() called with journal_id = ' + journal_id + ', txid = ' + txid);
+            return done();
         }
     };
 };

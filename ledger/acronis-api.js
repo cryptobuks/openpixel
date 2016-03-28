@@ -28,7 +28,19 @@ module.exports = function (options, debug_msg, on_error) {
                 return callback(err, {});
             }
             debug_msg(`(create_journal) Request completed: ${JSON.stringify(journal)}`);
-            return callback(null, journal)
+            return callback(null, journal);
+        });
+    }
+
+    function show_journal(journal, callback) {
+        debug_msg(`(show_journal) Show journal id = ${journal.id}`);
+        req.send(`/journals/${journal.id}`, {}, (err, journal) => {
+            if (err) {
+                on_error('(show_journal) Request error:', err);
+                return callback(err, {});
+            }
+            debug_msg(`(show_journal) Request completed: ${JSON.stringify(journal)}`);
+            return callback(null, journal);
         });
     }
 
@@ -101,6 +113,7 @@ module.exports = function (options, debug_msg, on_error) {
 
     return {
         create_journal:    create_journal,
+        show_journal:      show_journal,
         create_record:     create_record,
         add_fingerprint:   add_fingerprint,
         add_file:          add_file,

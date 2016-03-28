@@ -46,11 +46,16 @@ else {
 
 var config = utils.merge(custom, defaults);
 
+config.pixel.port = parseInt(process.env.PORT) || config.pixel.port;
+config.web_ui.port = parseInt(process.env.PORT) || config.web_ui.port;
 config.register.folder = absolutize_path(config.register.folder);
 config.timestamper.logs_folder = absolutize_path(process.argv[2] || path.join(config.timestamper.logs_folder, utils.get_ph_folder()));
 config.timestamper.processed_counters_folder = absolutize_path(config.timestamper.processed_counters_folder);
 config.pixel.endpoints = arrayize_object(config.pixel.endpoints);
 config.pixel.cookies.sign_keys = arrayize_object(config.pixel.cookies.sign_keys);
+if (config.web_ui.auth.type === 'basic') {
+    config.web_ui.auth.options.users = arrayize_object(config.web_ui.auth.options.users);
+}
 
 logger.debug('Final config: ' + JSON.stringify(config));
 

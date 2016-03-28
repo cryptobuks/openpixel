@@ -149,8 +149,14 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
     }
 
     if (files.length === 0) {
-        logger.log(`No log-files to parse in ${config.timestamper.logs_folder}`);
-        return exit(0, true);
+        if (config.timestamper.missing_ok) {
+            logger.log(`No log files to parse in ${config.timestamper.logs_folder}`);
+            return exit(0, true);
+        }
+        else {
+            logger.error(`No log files to parse in ${config.timestamper.logs_folder}`);
+            return exit(1, true);
+        }
     }
 
     logger.log(`Files to be processed: ${files.map((f) => path.basename(f)).join(', ')}`);
@@ -170,7 +176,7 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
         ledger.stamp(journal, function (err) {
             dur = process.hrtime(dur);
             if (err) {
-                logger.error('Error stamping the files:', err);
+                logger.error('Error stamping the files in ledger:', err);
                 return exit(1, true);
             }
             logger.log(`Files were successfully stamped in ledger, journal_id = ${journal.id}, ${utils.hrt2sec(dur)} elapsed`);
@@ -178,11 +184,29 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
             counters_storage.acknowledge_stamp(journal.id, function (err) {
                 dur = process.hrtime(dur);
                 if (err) {
-                    logger.error();
+                    logger.error('Error stamping the files in counters storage:', err);
                     return exit(1, true);
                 }
                 logger.log(`Files were successfully stamped in counters storage, ${utils.hrt2sec(dur)} elapsed`);
-                return exit(failed_files.length > 0 ? 1 : 0, true);
+
+                logger.log('Waiting to get txid from ledger');
+                ledger.get_txid(journal, function (err, txid) {
+                    if (err) {
+                        logger.error('Error getting txid from ledger:', err);
+                        return exit(1, true);
+                    }
+
+                    logger.log('Got txid from ledger: ' + txid);
+                    counters_storage.set_txid(journal.id, txid, function (err) {
+                        if (err) {
+                            logger.error('Error setting txid in counters storage:', err);
+                            return exit(1, true);
+                        }
+
+                        logger.log('Updated txid in counters storage');
+                        return exit(failed_files.length > 0 ? 1 : 0, true);
+                    });
+                });
             });
         });
     }

@@ -274,7 +274,6 @@ function hrt2sec(hr, p) {
     r = r - 60*60*h;
     var m = Math.floor(r/60);
     r = r - 60*m;
-    var s = r;
 
     var str = '';
     if (h > 0) {

@@ -14,10 +14,6 @@ module.exports = (options, debug_msg, on_error) => {
         },
 
         add: function (journal, log_file, counters_file, done) {
-            if (journal === null || journal === undefined || journal.id === null || journal.id === undefined) {
-                debug_msg('Empty journal or journal.id in add()');
-                return done();
-            }
             debug_msg('Adding files ' + log_file + ', ' + counters_file + ' to journal ' + journal.id);
             api.create_record((err, record) => {
                 if (err) return done(err);
@@ -55,6 +51,64 @@ module.exports = (options, debug_msg, on_error) => {
             api.timestamp_journal(journal, (err) => {
                 done(err);
             });
+        },
+
+        get_txid: function (journal, done) {
+            var ii;
+
+            var t = 0;
+            function check() {
+                t += 1;
+                //api.show_journal(journal, function (err, full_journal) {
+                var query = `
+                    query {
+                        user {
+                            email
+                            journal(id: "${journal.id}") {
+                                id
+                                name
+                                timestamps(limit: 1) {
+                                    txid
+                                }
+                            }
+                        }
+                    }
+                `;
+                api.gql_query(query, function (err, body) {
+                    if (err) {
+                        return done(err);
+                    }
+                    debug_msg('Got body = ' + body + ' of type ' + typeof body);
+                    if (typeof body === 'string') {
+                        body = JSON.parse(body);
+                    }
+
+                    if (!body.user || ! body.user.journal) {
+                        return done('Unexpected resopnse: either user or user.jounral sections are missing', null);
+                    }
+
+                    var full_journal = body.user.journal[0];
+                    debug_msg('Got journal = ' + JSON.stringify(journal));
+
+                    if (full_journal.timestamps && full_journal.timestamps[0] && full_journal.timestamps[0].txid) {
+                        debug_msg(`Got txid = ${full_journal.timestamps[0].txid}`);
+                        clearInterval(ii);
+                        return done(null, full_journal.timestamps[0].txid);
+                    }
+
+                    if (options.txid_max_checks == null || t <= options.txid_max_checks) {
+                        debug_msg(`No txid yet, will check again in ${options.txid_check_interval/1000} sec.`);
+                    }
+                    else {
+                        debug_msg(`No txid yet, but max checks (${options.txid_max_checks}) exceeded (${t}), will stop`);
+                        clearInterval(ii);
+                        return done('Max txid checks exceeded', null);
+                    }
+                });
+            }
+
+            check();
+            setInterval(check, options.txid_check_interval);
         }
     }
 }

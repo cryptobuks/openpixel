@@ -94,5 +94,6 @@ module.exports = {
     incr:              storage.incr,
     incr_by_json:      storage.incr_by_json || default_incr_by_json(storage),
     save_ledger_data:  storage.save_ledger_data,
-    acknowledge_stamp: storage.acknowledge_stamp
+    acknowledge_stamp: storage.acknowledge_stamp,
+    set_txid:          storage.set_txid
 };

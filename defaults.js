@@ -12,7 +12,7 @@ module.exports = {
             name: 'pixel',
             level: 1
         },
-        port: parseInt(process.env.PORT) || 4321,
+        port: 4321,
         endpoints: ['/pixel.gif'],
         log_404_as_error: true,
         id_length: 12,
@@ -41,6 +41,7 @@ module.exports = {
             name: 'timestamper',
             level: 1
         },
+        missing_ok: false,
         concurrent_files: 1,
         max_failed_files: null,
         logs_folder: './requests',
@@ -78,7 +79,26 @@ module.exports = {
                 email: '',
                 accessKey: '',
                 accessSecret: ''
-            }
+            },
+            txid_check_interval: 60*1000,
+            txid_max_checks: 30
         }
     },
+
+    web_ui: {
+        logger: {
+            name: 'web-ui',
+            level: 1
+        },
+        port: 5000,
+        auth: {
+            type: 'basic',
+            options: {
+                users: [
+                    { name: 'admin', pass: 'p@ssw0rd' }
+                ]
+            }
+        },
+        base_path: '/search'
+    }
 };
