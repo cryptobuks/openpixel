@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "basic-auth": "^1.0.3",
+    "body-parser": "^1.15.0",
     "cookies": "^0.6.1",
     "cron": "^1.1.0",
     "ejs": "^2.4.1",

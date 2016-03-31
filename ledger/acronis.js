@@ -109,6 +109,30 @@ module.exports = (options, debug_msg, on_error) => {
 
             check();
             setInterval(check, options.txid_check_interval);
+        },
+
+        download: function (what, journal_id, rest, done) {
+            /*
+            const fs = require('fs');
+            var readStream = fs.createReadStream('/Users/itsbeta/projs/super-pixel-2/processed/test.txt');
+            done(null, readStream);
+            */
+            debug_msg(`Downloading file ${what} from journal_id = ${journal_id}, rest = ${JSON.stringify(rest)}`);
+            var record = { id: rest.record_id };
+            var file_id = '';
+            if (what === 'log_file') {
+                file_id = rest.log_file_id;
+            }
+            else if (what === 'counters_file') {
+                file_id = rest.counters_file_id;
+            }
+            api.download_file(record, file_id, function (err, fstream) {
+                if (err) {
+                    return done(err);
+                }
+                debug_msg('Returning stream in callback');
+                return done(null, fstream);
+            });
         }
     }
 }

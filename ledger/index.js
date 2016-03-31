@@ -17,5 +17,6 @@ module.exports = {
     open:     ledger.open,
     add:      ledger.add,
     stamp:    ledger.stamp,
-    get_txid: ledger.get_txid
+    get_txid: ledger.get_txid,
+    download: ledger.download
 };

@@ -87,6 +87,18 @@ module.exports = function (options, debug_msg, on_error) {
         });
     }
 
+    function download_file(record, file_id, callback) {
+        debug_msg(`(download_file) Trying to download from record ${record.id} the file ${file_id}`);
+        req.send(`/records/${record.id}/files/${file_id}/download`, { method: 'GET', fstream: true }, (err, fstream) => {
+            if (err) {
+                on_error('(download_file) Request error:', err);
+                return callback(err, null);
+            }
+            debug_msg('(download_file) Request completed, streaming', fstream);
+            return callback(err, fstream);
+        });
+    }
+
     function commit_record(journal, record, callback) {
         debug_msg(`(commit_record) Trying to commit record ${record.id} to journal ${journal.id}`);
         req.send(`/journals/${journal.id}/commit/${record.id}`, { method: 'POST', json: {}, ok_code: 204 }, (err, body) => {
@@ -117,6 +129,7 @@ module.exports = function (options, debug_msg, on_error) {
         create_record:     create_record,
         add_fingerprint:   add_fingerprint,
         add_file:          add_file,
+        download_file:     download_file,
         commit_record:     commit_record,
         timestamp_journal: timestamp_journal,
         gql_query:         gql_query

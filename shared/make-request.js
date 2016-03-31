@@ -21,6 +21,7 @@ module.exports = function (options, debug_msg, on_error) {
             var file    = other.file;
             var ok_code = other.ok_code || 200;
             var headers = other.headers;
+            var fstream = other.fstream || false;
 
             var req = {
                 uri: options.base_url + sub_url,
@@ -67,8 +68,10 @@ module.exports = function (options, debug_msg, on_error) {
             var responses = [];
             function make_request() {
                 tries += 1;
-                request(req, function (err, response, body) {
-                    if (err) {
+                if (fstream) {
+                    debug_msg('Will make a streaming request');
+                    request(req)
+                    .on('error', function (err) {
                         responses.push(err.code);
                         if (tries < options.max_tries) {
                             on_error(`Request failed (${JSON.stringify(req)}), will retry (${tries}/${options.max_tries}). Error`, err);
@@ -78,21 +81,41 @@ module.exports = function (options, debug_msg, on_error) {
                             on_error(`Request failed (${JSON.stringify(req)}), giving up. Error`, err);
                             return callback(new Error(`${options.max_tries} consecutive errors: ${responses.join(', ')}`), {});
                         }
-                    }
-                    if (response.statusCode != ok_code) {
-                        responses.push(response.statusCode);
-                        if (tries < options.max_tries) {
-                            on_error(`Invalid response (${JSON.stringify(req)}) status code: expected ${ok_code}, but got ${response.statusCode}, will retry (${tries}/${options.max_tries})`);
-                            return make_request();
+                    })
+                    .on('response', function (fstream) {
+                        debug_msg(`Got successfull response stream`, fstream);
+                        return callback(null, fstream);
+                    });
+                }
+                else {
+                    debug_msg('Will make an ordinary request');
+                    request(req, function (err, response, body) {
+                        if (err) {
+                            responses.push(err.code);
+                            if (tries < options.max_tries) {
+                                on_error(`Request failed (${JSON.stringify(req)}), will retry (${tries}/${options.max_tries}). Error`, err);
+                                return make_request();
+                            }
+                            else {
+                                on_error(`Request failed (${JSON.stringify(req)}), giving up. Error`, err);
+                                return callback(new Error(`${options.max_tries} consecutive errors: ${responses.join(', ')}`), {});
+                            }
                         }
-                        else {
-                            on_error(`Invalid response (${JSON.stringify(req)}) status code: expected ${ok_code}, but got ${response.statusCode}, giving up`);
-                            return callback(new Error(`${options.max_tries} consecutive errors: ${responses.join(', ')}`), {});
+                        if (response.statusCode != ok_code) {
+                            responses.push(response.statusCode);
+                            if (tries < options.max_tries) {
+                                on_error(`Invalid response (${JSON.stringify(req)}) status code: expected ${ok_code}, but got ${response.statusCode}, will retry (${tries}/${options.max_tries})`);
+                                return make_request();
+                            }
+                            else {
+                                on_error(`Invalid response (${JSON.stringify(req)}) status code: expected ${ok_code}, but got ${response.statusCode}, giving up`);
+                                return callback(new Error(`${options.max_tries} consecutive errors: ${responses.join(', ')}`), {});
+                            }
                         }
-                    }
-                    debug_msg(`Got successfull response, body: ${JSON.stringify(body)}`);
-                    return callback(null, body);
-                });
+                        debug_msg(`Got successfull response, body: ${JSON.stringify(body)}`);
+                        return callback(null, body);
+                    });
+                }
             }
             make_request();
         }

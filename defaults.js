@@ -94,11 +94,12 @@ module.exports = {
         auth: {
             type: 'basic',
             options: {
+                realm: 'example.com',
                 users: [
                     { name: 'admin', pass: 'p@ssw0rd' }
                 ]
             }
         },
-        base_path: '/search'
+        base_path: '/search',
     }
 };

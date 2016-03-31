@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="https://bootswatch.com/flatly/bootstrap.min.css">
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <title>Search counters</title>
+</head>
+
+<body>
+    <div class="container">
+        <div class="col-md6 col-md-offset3">
+            <br/>
+            <form id="query" role="form" class="form-horizontal border">
+                <legend>Search counters</legend>
+                <hr/>
+                <input type="hidden" id="tzoffset" name="tzoffset">
+
+                <div class="form-group">
+                    <div class="col-sm-1"></div>
+                    <label class="col-sm-1 control-label" for="hostname">Hostname</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control small" id="hostname" name="hostname" autofocus="autofocus"
+                            placeholder="ex. `www.google.com` or leave blank to query all">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-sm-1"></div>
+                    <label class="col-sm-1 control-label" for="pathname">Pathname</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" id="pathname" name="pathname"
+                            placeholder="ex. `/search` or leave blank to query all">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-sm-1"></div>
+                    <label class="col-sm-1 control-label" for="date_from_year">From<br><sub class="gmt"></sub></label>
+                    <div class="col-sm-2">
+                        <select class="form-control year" title="Year" id="date_from_year" name="date_from[year]">
+                        </select>
+                    </div>
+                    <div class="col-sm-2">
+                        <select class="form-control month" title="Month" id="date_from_month" name="date_from[month]">
+                        </select>
+                    </div>
+                    <div class="col-sm-2">
+                        <select class="form-control date" title="Day" id="date_from_date" name="date_from[date]">
+                        </select>
+                    </div>
+                    <div class="col-sm-2">
+                        <select class="form-control hour" title="Hour" id="date_from_hour" name="date_from[hour]">
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-sm-1"></div>
+                    <label class="col-sm-1 control-label" for="date_to_year">To<br><sub class="gmt"></sub></label>
+                    <div class="col-sm-2">
+                        <select class="form-control year" title="Year" id="date_to_year" name="date_to[year]">
+                        </select>
+                    </div>
+                    <div class="col-sm-2">
+                        <select class="form-control month" title="Month" id="date_to_month" name="date_to[month]">
+                        </select>
+                    </div>
+                    <div class="col-sm-2">
+                        <select class="form-control date" title="Day" id="date_to_date" name="date_to[date]">
+                        </select>
+                    </div>
+                    <div class="col-sm-2">
+                        <select class="form-control hour" title="Hour" id="date_to_hour" name="date_to[hour]">
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-sm-1"></div>
+                    <label class="col-sm-1 control-label" for="aggregation">Aggregation</label>
+                    <div class="col-sm-4">
+                        <select class="form-control" id="aggregation" name="aggregation">
+                            <option value="">None</option>
+                            <option value="hostname">by Hostname</option>
+                            <option value="hour">by Hour</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-sm-2">
+                        <button id="submit" type="submit" class="btn btn-primary">
+                            <span class="glyphicon glyphicon-ok" aria-hidden="true"></span> Submit
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <hr/>
+        <div id="resp" class="col-md6 col-md-offset3">
+            <div id="success" style="display:none;" class="alert fade in" role=alert>
+                Request completed, returned <b><span id="success-msg"></span></b> row(s)
+            </div>
+            <div id="error" style="display:none;" class="alert alert-dismissible fade in" role=alert>
+                Error occured <span id="error-msg"></span>
+            </div>
+            <table id="results" style="display:none;" class="table table-hover">
+            </table>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        function twoDigits(x) {
+            return (x < 10 ? '0' : '') + x;
+        }
+
+        function option(value, selectedif, displayed) {
+            return ('<option value="' + value + '"' + (selectedif ? ' selected="selected"' : '') + '>' + displayed +
+                '</option>');
+        }
+
+        $(function () {
+            $('#results').on('click', '.clickable-row', function (event) {
+                if ($(this).hasClass('active')) {
+                    $(this).removeClass('active');
+                }
+                else {
+                    $(this).addClass('active').siblings().removeClass('active');
+                }
+            });
+
+            var now = new Date();
+            var gmt_str = '';
+            var tzoffset_min = 0;
+
+            (function () {
+                // years
+                var years = [];
+                for (var year = 1900 + now.getYear(); year >= 2016; year--) {
+                    years.push(year);
+                }
+                $('select.year').html(years.map(function (y) {
+                    return option(y, false, y);
+                }).join(''));
+            })();
+
+            (function () {
+                // months
+                var months_names = ['January', 'February', 'March', 'April', 'May', 'June',
+                                    'July', 'August', 'September', 'October', 'November', 'December'];
+                var months = [];
+                for (var month = 1; month <= 12; month++) {
+                    months.push(month);
+                }
+                $('select.month').html(months.map(function (m) {
+                    return option(twoDigits(m), m === now.getMonth()+1, months_names[m-1]);
+                }));
+            })();
+
+            (function () {
+                // dates
+                var dates = [];
+                for (var date = 1; date <= 31; date++) {
+                    dates.push(date);
+                }
+                $('select.date').html(dates.map(function (d) {
+                    return option(twoDigits(d), d === now.getDate(), d);
+                }));
+            })();
+
+            (function () {
+                // hours
+                var hours = [];
+                for (var hour = 0; hour <= 23; hour++) {
+                    hours.push(hour);
+                }
+                $('select.hour').html(hours.map(function (h) {
+                    return option(twoDigits(h), h === now.getHours() - 1, h); // select previous hour by default
+                }));
+            })();
+
+            (function () {
+                // tz
+                var tzoffset = now.getTimezoneOffset();
+                tzoffset_min = tzoffset;
+                $('#tzoffset').val(tzoffset);
+                var offsetH = Math.floor(Math.abs(tzoffset)/60);
+                var offsetM = Math.abs(tzoffset) - offsetH*60;
+                gmt_str = 'GMT' + (tzoffset > 0 ? '-' : '+') + twoDigits(offsetH) + ':' + twoDigits(offsetM);
+                $('.gmt').html(gmt_str);
+            })();
+
+            $('#query').on('submit', function (event) {
+                event.preventDefault();
+                $('#submit').prop('disabled', true);
+
+                var data = {};
+                data.hostname = $('#hostname').val();
+                data.pathname = $('#pathname').val();
+
+                (function () {
+                    var tzoffset = $('#tzoffset').val();
+                    var date_from = new Date(
+                        $('#date_from_year').val() + '-' +
+                        $('#date_from_month').val() + '-' +
+                        $('#date_from_date').val() + 'T' +
+                        $('#date_from_hour').val() + ':00:00.000Z'
+                    );
+                    var date_to = new Date(
+                        $('#date_to_year').val() + '-' +
+                        $('#date_to_month').val() + '-' +
+                        $('#date_to_date').val() + 'T' +
+                        $('#date_to_hour').val() + ':00:00.000Z'
+                    );
+                    data.date_from = (new Date(Number(date_from) + Number(tzoffset)*60*1000)).toISOString();
+                    data.date_to = (new Date(Number(date_to) + Number(tzoffset)*60*1000)).toISOString();
+                })();
+
+                data.aggregation = $('#aggregation').val();
+                console.log('Submitting: ' + JSON.stringify(data));
+
+                $('#error').hide();
+                $('#success').hide();
+                $('#results').hide();
+
+                $.post('<%= config.web_ui.base_path %>/counters', data, function (a, b, c) {
+                    $('#submit').prop('disabled', false);
+                    var resp = (c && c.responseJSON) ? c.responseJSON : { err: 'Something went wrong' };
+
+                    if (resp.err) {
+                        $('#error').removeClass('alert-success').addClass('alert-danger').show();
+                        $('#error-msg').html('' + resp.err);
+                        return;
+                    }
+
+                    var rows = resp.results;
+                    $('#success').removeClass('alert-danger').addClass('alert-success').show();
+                    $('#success-msg').html('' + rows.length);
+
+                    var expected_columns  = ['pstart',     'hostname', 'pathname', 'val',   'sum_vals'];
+                    var displayed_columns = ['Time (' + gmt_str + ')', 'Hostname', 'Pathname', 'Count', 'Sum counts'];
+                    var transformations   = [
+                        function (v) {
+                            var t = new Date(v.split('-').join('/').split('T').join(' ') + ':00:00.000Z');
+                            t = new Date(Number(t) - tzoffset_min*60*1000);
+                            return t.toISOString().substr(0,13).split('-').join('/').split('T').join(' ') + ':00';
+                        },
+                        function (v) { return v === '_no_referer_' ? 'UNKNOWN' : v; },
+                        function (v) { return v; },
+                        function (v) { return v; },
+                        function (v) { return v; }
+                    ];
+                    var tjson = [];
+
+                    var table = $('#results');
+                    table.html('');
+                    if (rows.length > 0) {
+                        // thead
+                        var columns = Object.keys(rows[0]);
+                        var column_ids = [];
+                        for (var i = 0 ; i < expected_columns.length; i++) {
+                            if (columns.indexOf(expected_columns[i]) >= 0) {
+                                column_ids.push(i);
+                            }
+                        }
+                        var thead = $('<thead></thead>');
+                        thead.append($('<tr></tr>'));
+                        for (var i = 0; i < column_ids.length; i++) {
+                            var dcn = displayed_columns[column_ids[i]];
+                            thead.find('tr').append($('<th></th>').text(dcn));
+                        }
+                        table.append(thead);
+                        // tbody
+                        var tbody = $('<tbody></tbody');
+                        for (var j = 0; j < rows.length; j++) {
+                            var tr = $('<tr></tr>').addClass('clickable-row');
+                            for (var i = 0; i < column_ids.length; i++) {
+                                var dcn = displayed_columns[column_ids[i]];
+                                var dv = transformations[column_ids[i]](rows[j][expected_columns[column_ids[i]]]);
+                                tr.append( $('<td></td>').text(dv) );
+                                tjson[dcn] = dv;
+                            }
+                            tbody.append(tr);
+                        }
+                        table.append(tbody);
+                    }
+                    $('#results').show();
+
+                    $('html, body').animate({
+                        scrollTop: $("#results").offset().top
+                    }, 500);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

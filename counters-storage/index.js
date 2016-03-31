@@ -50,7 +50,7 @@ const storage = require(`./${config.type}`)(config.options, debug_msg, on_discon
     }
 */
 
-function default_incr_by_json(storage) {
+function default_incr_by_json() {
     var incr = storage.incr;
     var async_for_each = utils.async_for_each;
     return function (json, done) {
@@ -90,10 +90,13 @@ function default_incr_by_json(storage) {
 }
 
 module.exports = {
-    init:              storage.init,
-    incr:              storage.incr,
-    incr_by_json:      storage.incr_by_json || default_incr_by_json(storage),
-    save_ledger_data:  storage.save_ledger_data,
-    acknowledge_stamp: storage.acknowledge_stamp,
-    set_txid:          storage.set_txid
+    init:                   storage.init,
+    incr:                   storage.incr,
+    incr_by_json:           storage.incr_by_json || default_incr_by_json(),
+    save_ledger_data:       storage.save_ledger_data,
+    acknowledge_stamp:      storage.acknowledge_stamp,
+    set_txid:               storage.set_txid,
+    search:                 storage.search,
+    search_ledger:          storage.search_ledger,
+    get_ledger_data_by_id:  storage.get_ledger_data_by_id
 };
