@@ -26,6 +26,7 @@ app.set('x-powered-by', false);
 app.use(parser.json());
 app.use(parser.urlencoded({ extended: true }));
 
+app.use(config.web_ui.base_path, authenticate, require('./routes/index')(config, logger));
 app.use(config.web_ui.base_path, authenticate, require('./routes/counters')(config, logger, counters, ledger));
 app.use(config.web_ui.base_path, authenticate, require('./routes/ledger')(config, logger, counters, ledger));
 
