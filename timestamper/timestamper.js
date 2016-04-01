@@ -225,7 +225,12 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
             if (failed_files.length > 0) {
                 logger.error(`Failed to add ${failed_files.length} files: ${failed_files.map((f) => path.basename(f)).join(', ')}`);
             }
-            return stamp();
+            if (too_many_failed) {
+                return exit(1, true);
+            }
+            else {
+                return stamp();
+            }
         }
         else {
             p += 1;
