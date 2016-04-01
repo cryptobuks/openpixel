@@ -19,6 +19,7 @@ module.exports = function (config, logger, counters, ledger) {
 
     router.post('/ledger', function (req, res) {
         logger.debug('Search ledger request: ' + JSON.stringify(req.body));
+        req.body.page_size = config.web_ui.page_size;
         counters.search_ledger(req.body, function (err, rows) {
             if (err) {
                 logger.error('Could not process search ledger request ' + JSON.stringify(req.body) + ', err:', err);

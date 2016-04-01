@@ -135,7 +135,7 @@ module.exports = function (options, debug_msg, on_disconnect, on_error) {
                 order.push('pstart ASC');
             }
             else {
-                query.push('SELECT pstart AS pstart, hostname AS hostname, pathname AS pathname, val As val');
+                query.push('SELECT pstart AS pstart, hostname AS hostname, pathname AS pathname, val AS val');
                 order.push('pstart ASC');
                 order.push('hostname ASC');
                 order.push('pathname ASC');
@@ -172,6 +172,12 @@ module.exports = function (options, debug_msg, on_disconnect, on_error) {
             if (order.length > 0) {
                 query.push('ORDER BY ' + order.join(', '));
             }
+
+            if (!isNaN(parseInt(queryp.page)) && !isNaN(parseInt(queryp.page_size))) {
+                query.push( 'LIMIT ' + parseInt(queryp.page_size) );
+                query.push( 'OFFSET ' + parseInt(queryp.page_size)*(parseInt(queryp.page) - 1) );
+            }
+
             var query = query.join(' ');
 
             run_query(query, params, done);
@@ -209,16 +215,22 @@ module.exports = function (options, debug_msg, on_disconnect, on_error) {
             if (order.length > 0) {
                 query.push('ORDER BY ' + order.join(', '));
             }
+
+            if (!isNaN(parseInt(queryp.page)) && !isNaN(parseInt(queryp.page_size))) {
+                query.push( 'LIMIT ' + parseInt(queryp.page_size) );
+                query.push( 'OFFSET ' + parseInt(queryp.page_size)*(parseInt(queryp.page) - 1) );
+            }
+
             var query = query.join(' ');
 
             run_query(query, params, done);
         },
 
         get_ledger_data_by_id: function (id, done) {
-            if ( isNaN(Number(id)) ) {
+            if ( isNaN(parseInt(id)) ) {
                 return done('Invalid id');
             }
-            var id = Number(id);
+            var id = parseInt(id);
             var query = 'SELECT pstart, hostname, journal_id, rest FROM ledger_data WHERE id=$1::int';
             var params = [id];
             run_query(query, params, done);

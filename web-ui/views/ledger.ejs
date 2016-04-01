@@ -80,13 +80,21 @@
         <hr/>
         <div id="resp" class="col-md6 col-md-offset3">
             <div id="success" style="display:none;" class="alert fade in" role=alert>
-                Request completed, returned <b><span id="success-msg"></span></b> row(s)
+                Request completed<!--, returned <b><span id="success-msg"></span></b> row(s)-->
             </div>
             <div id="error" style="display:none;" class="alert alert-dismissible fade in" role=alert>
                 Error occured <span id="error-msg"></span>
             </div>
             <table id="results" style="display:none;" class="table table-hover">
             </table>
+        </div>
+
+        <div id="pages" style="display:none;" class="text-center">
+            <ul class="pagination">
+                <li><button type="button" class="btn btn-primary btn-sm" id="prev-page" title="Previous page"><i class="glyphicon glyphicon-chevron-left"></i></button></li>
+                <li>Page <i><span id="page"></span></i></li>
+                <li><button type="button" class="btn btn-primary btn-sm" id="next-page" title="Next page"><i class="glyphicon glyphicon-chevron-right"></i></button></li>
+            </ul>
         </div>
     </div>
 
@@ -113,6 +121,7 @@
             var now = new Date();
             var gmt_str = '';
             var tzoffset_min;
+            var page = 1;
 
             (function () {
                 // years
@@ -171,11 +180,9 @@
                 $('.gmt').html(gmt_str);
             })();
 
-            $('#query').on('submit', function (event) {
-                event.preventDefault();
-                $('#submit').prop('disabled', true);
-
+            function get_results() {
                 var data = {};
+                data.page = page;
                 data.hostname = $('#hostname').val();
 
                 (function () {
@@ -201,6 +208,7 @@
                 $('#error').hide();
                 $('#success').hide();
                 $('#results').hide();
+                $('#pages').hide();
 
                 $.post('<%= config.web_ui.base_path %>/ledger', data, function (a, b, c) {
                     $('#submit').prop('disabled', false);
@@ -214,7 +222,7 @@
 
                     var rows = resp.results;
                     $('#success').removeClass('alert-danger').addClass('alert-success').show();
-                    $('#success-msg').html('' + rows.length);
+                    //$('#success-msg').html('' + rows.length);
 
                     var expected_columns = [
                         'pstart',
@@ -324,11 +332,34 @@
                         table.append(tbody);
                     }
                     $('#results').show();
+                    $('#page').text(page);
+                    $('#pages').show();
 
                     $('html, body').animate({
                         scrollTop: $("#results").offset().top
                     }, 500);
                 });
+            }
+
+            $('#query').on('submit', function (event) {
+                event.preventDefault();
+                $('#submit').prop('disabled', true);
+                get_results();
+            });
+
+            $('#prev-page').on('click', function (event) {
+                event.preventDefault();
+                if (page == 1) {
+                    return;
+                }
+                page = page - 1;
+                get_results();
+            });
+
+            $('#next-page').on('click', function (event) {
+                event.preventDefault();
+                page = page + 1;
+                get_results();
             });
         });
     </script>
