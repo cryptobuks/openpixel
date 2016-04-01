@@ -97,6 +97,8 @@ module.exports = {
     acknowledge_stamp:      storage.acknowledge_stamp,
     set_txid:               storage.set_txid,
     search:                 storage.search,
+    search_count:           storage.search_count,
     search_ledger:          storage.search_ledger,
+    search_ledger_count:    storage.search_ledger_count,
     get_ledger_data_by_id:  storage.get_ledger_data_by_id
 };

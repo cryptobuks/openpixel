@@ -101,6 +101,6 @@ module.exports = {
             }
         },
         base_path: '/search',
-        page_size: 15
+        page_size: 20
     }
 };

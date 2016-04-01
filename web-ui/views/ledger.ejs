@@ -80,7 +80,7 @@
         <hr/>
         <div id="resp" class="col-md6 col-md-offset3">
             <div id="success" style="display:none;" class="alert fade in" role=alert>
-                Request completed<!--, returned <b><span id="success-msg"></span></b> row(s)-->
+                Request completed, returned <b><span id="success-msg"></span></b> row(s)
             </div>
             <div id="error" style="display:none;" class="alert alert-dismissible fade in" role=alert>
                 Error occured <span id="error-msg"></span>
@@ -91,9 +91,11 @@
 
         <div id="pages" style="display:none;" class="text-center">
             <ul class="pagination">
+                <li><button type="button" class="btn btn-primary btn-sm" id="first-page" title="First page"><i class="glyphicon glyphicon-fast-backward"></i></button></li>
                 <li><button type="button" class="btn btn-primary btn-sm" id="prev-page" title="Previous page"><i class="glyphicon glyphicon-chevron-left"></i></button></li>
-                <li>Page <i><span id="page"></span></i></li>
+                <li>&nbsp;Page <i><span id="page"></span> of <span id="max_pages"></span></i>&nbsp;</li>
                 <li><button type="button" class="btn btn-primary btn-sm" id="next-page" title="Next page"><i class="glyphicon glyphicon-chevron-right"></i></button></li>
+                <li><button type="button" class="btn btn-primary btn-sm" id="last-page" title="Last page"><i class="glyphicon glyphicon-fast-forward"></i></button></li>
             </ul>
         </div>
     </div>
@@ -122,6 +124,9 @@
             var gmt_str = '';
             var tzoffset_min;
             var page = 1;
+            var rows_count = 0;
+            var max_pages = 1;
+            the_data = null;
 
             (function () {
                 // years
@@ -180,30 +185,93 @@
                 $('.gmt').html(gmt_str);
             })();
 
+            function show_pages() {
+                if (page === 1) {
+                    $('#prev-page').prop('disabled', true);
+                    $('#first-page').prop('disabled', true);
+                }
+                else {
+                    $('#prev-page').prop('disabled', false);
+                    $('#first-page').prop('disabled', false);
+                }
+
+                if (max_pages != null && page === max_pages) {
+                    $('#next-page').prop('disabled', true);
+                    $('#last-page').prop('disabled', true);
+                }
+                else {
+                    $('#next-page').prop('disabled', false);
+                    $('#last-page').prop('disabled', false);
+                }
+
+                $('#pages').show();
+            }
+
+            function get_data() {
+                if (the_data) {
+                    the_data._page = page;
+                }
+                else {
+                    var data = {};
+                    data._page = page;
+                    data.hostname = $('#hostname').val();
+
+                    (function () {
+                        var tzoffset = $('#tzoffset').val();
+                        var date_from = new Date(
+                            $('#date_from_year').val() + '-' +
+                            $('#date_from_month').val() + '-' +
+                            $('#date_from_date').val() + 'T' +
+                            $('#date_from_hour').val() + ':00:00.000Z'
+                        );
+                        var date_to = new Date(
+                            $('#date_to_year').val() + '-' +
+                            $('#date_to_month').val() + '-' +
+                            $('#date_to_date').val() + 'T' +
+                            $('#date_to_hour').val() + ':00:00.000Z'
+                        );
+                        data.date_from = (new Date(Number(date_from) + Number(tzoffset)*60*1000)).toISOString();
+                        data.date_to = (new Date(Number(date_to) + Number(tzoffset)*60*1000)).toISOString();
+                    })();
+
+                    the_data = data;
+                }
+                return the_data;
+            }
+
+            function get_count(done) {
+                var data = get_data();
+                console.log('Counting: ' + JSON.stringify(data));
+                $.post('<%= config.web_ui.base_path %>/ledger/count', data, function (a, b, c) {
+                    var resp = (c && c.responseJSON) ? c.responseJSON : { err: 'Something went wrong' };
+
+                    if (resp.err) {
+                        console.log('Error counting: ', resp.err);
+                        rows_count = null;
+                        max_pages = null;
+                        $('#success-msg').text('?');
+                        $('#max_pages').text('?');
+                        return done();
+                    }
+
+                    rows_count = parseInt(resp.results[0].count);
+                    if (rows_count === 0) {
+                        max_pages = 1;
+                    }
+                    <% if (config.web_ui.page_size != null) { -%>
+                    else {
+                        max_pages = Math.ceil(rows_count/<%= config.web_ui.page_size %>);
+                    }
+                    <% } %>
+                    $('#max_pages').text(max_pages);
+                    $('#success-msg').text(rows_count);
+                    done();
+                });
+            }
+
             function get_results() {
-                var data = {};
-                data.page = page;
-                data.hostname = $('#hostname').val();
-
-                (function () {
-                    var tzoffset = $('#tzoffset').val();
-                    var date_from = new Date(
-                        $('#date_from_year').val() + '-' +
-                        $('#date_from_month').val() + '-' +
-                        $('#date_from_date').val() + 'T' +
-                        $('#date_from_hour').val() + ':00:00.000Z'
-                    );
-                    var date_to = new Date(
-                        $('#date_to_year').val() + '-' +
-                        $('#date_to_month').val() + '-' +
-                        $('#date_to_date').val() + 'T' +
-                        $('#date_to_hour').val() + ':00:00.000Z'
-                    );
-                    data.date_from = (new Date(Number(date_from) + Number(tzoffset)*60*1000)).toISOString();
-                    data.date_to = (new Date(Number(date_to) + Number(tzoffset)*60*1000)).toISOString();
-                })();
-
-                console.log('Submitting: ' + JSON.stringify(data));
+                var data = get_data();
+                console.log('Searching: ' + JSON.stringify(data));
 
                 $('#error').hide();
                 $('#success').hide();
@@ -333,7 +401,7 @@
                     }
                     $('#results').show();
                     $('#page').text(page);
-                    $('#pages').show();
+                    show_pages();
 
                     $('html, body').animate({
                         scrollTop: $("#results").offset().top
@@ -344,7 +412,19 @@
             $('#query').on('submit', function (event) {
                 event.preventDefault();
                 $('#submit').prop('disabled', true);
-                get_results();
+
+                $('#error').hide();
+                $('#success').hide();
+                $('#results').hide();
+                $('#pages').hide();
+                page = 1;
+                rows_count = 0;
+                max_pages = 1;
+                the_data = null;
+
+                get_count(function () {
+                    get_results();
+                });
             });
 
             $('#prev-page').on('click', function (event) {
@@ -359,6 +439,18 @@
             $('#next-page').on('click', function (event) {
                 event.preventDefault();
                 page = page + 1;
+                get_results();
+            });
+
+            $('#first-page').on('click', function (event) {
+                event.preventDefault();
+                page = 1;
+                get_results();
+            });
+
+            $('#last-page').on('click', function (event) {
+                event.preventDefault();
+                page = max_pages;
                 get_results();
             });
         });

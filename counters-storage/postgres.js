@@ -166,6 +166,10 @@ module.exports = function (options, debug_msg, on_disconnect, on_error) {
             if (conditions.length > 0) {
                 query.push('WHERE ' + conditions.join(' AND '));
             }
+            else {
+                return done('Empty WHERE statement in query');
+            }
+
             if (group.length > 0) {
                 query.push('GROUP BY ' + group.join(', '));
             }
@@ -173,9 +177,61 @@ module.exports = function (options, debug_msg, on_disconnect, on_error) {
                 query.push('ORDER BY ' + order.join(', '));
             }
 
-            if (!isNaN(parseInt(queryp.page)) && !isNaN(parseInt(queryp.page_size))) {
-                query.push( 'LIMIT ' + parseInt(queryp.page_size) );
-                query.push( 'OFFSET ' + parseInt(queryp.page_size)*(parseInt(queryp.page) - 1) );
+            if (!isNaN(parseInt(queryp._page)) && !isNaN(parseInt(queryp._page_size))) {
+                query.push( 'LIMIT ' + parseInt(queryp._page_size) );
+                query.push( 'OFFSET ' + parseInt(queryp._page_size)*(parseInt(queryp._page) - 1) );
+            }
+
+            var query = query.join(' ');
+
+            run_query(query, params, done);
+        },
+
+        search_count: function (queryp, done) {
+            var query = []; // actual SQL query
+            var group = [];
+
+            var params = [];
+
+            query.push('SELECT COUNT(*)');
+            if (queryp.aggregation === 'hostname') {
+                group.push('hostname');
+            }
+            else if (queryp.aggregation === 'hour') {
+                group.push('pstart');
+            }
+
+            query.push('FROM stats');
+
+            var pcnt = (function () { var cnt = 0; return function () { return ++cnt; }; })();
+
+            var conditions = [];
+            if (queryp.hostname && queryp.aggregation != 'hour') {
+                conditions.push('hostname = $' + pcnt() + '::varchar');
+                params.push(queryp.hostname);
+            }
+            if (queryp.pathname && !queryp.aggregation) {
+                conditions.push('pathname = $' + pcnt() + '::varchar');
+                params.push(queryp.pathname);
+            }
+            if (queryp.date_from) {
+                conditions.push('pstart >= $' + pcnt() + '::varchar');
+                params.push(queryp.date_from.substr(0,13));
+            }
+            if (queryp.date_to) {
+                conditions.push('pstart <= $' + pcnt() + '::varchar');
+                params.push(queryp.date_to.substr(0,13));
+            }
+
+            if (conditions.length > 0) {
+                query.push('WHERE ' + conditions.join(' AND '));
+            }
+            else {
+                return done('Empty WHERE statement in query');
+            }
+
+            if (group.length > 0) {
+                query.push('GROUP BY ' + group.join(', '));
             }
 
             var query = query.join(' ');
@@ -212,13 +268,52 @@ module.exports = function (options, debug_msg, on_disconnect, on_error) {
             if (conditions.length > 0) {
                 query.push('WHERE ' + conditions.join(' AND '));
             }
+            else {
+                return done('Empty WHERE statement in query');
+            }
+
             if (order.length > 0) {
                 query.push('ORDER BY ' + order.join(', '));
             }
 
-            if (!isNaN(parseInt(queryp.page)) && !isNaN(parseInt(queryp.page_size))) {
-                query.push( 'LIMIT ' + parseInt(queryp.page_size) );
-                query.push( 'OFFSET ' + parseInt(queryp.page_size)*(parseInt(queryp.page) - 1) );
+            if (!isNaN(parseInt(queryp._page)) && !isNaN(parseInt(queryp._page_size))) {
+                query.push( 'LIMIT ' + parseInt(queryp._page_size) );
+                query.push( 'OFFSET ' + parseInt(queryp._page_size)*(parseInt(queryp._page) - 1) );
+            }
+
+            var query = query.join(' ');
+
+            run_query(query, params, done);
+        },
+
+        search_ledger_count: function (queryp, done) {
+            var query = [];
+            var params = [];
+
+            query.push('SELECT COUNT(*)');
+            query.push('FROM ledger_data');
+
+            var pcnt = (function () { var cnt = 0; return function () { return ++cnt; }; })();
+
+            var conditions = [];
+            if (queryp.hostname) {
+                conditions.push('hostname = $' + pcnt() + '::varchar');
+                params.push(queryp.hostname);
+            }
+            if (queryp.date_from) {
+                conditions.push('pstart >= $' + pcnt() + '::varchar');
+                params.push(queryp.date_from.substr(0,13));
+            }
+            if (queryp.date_to) {
+                conditions.push('pstart <= $' + pcnt() + '::varchar');
+                params.push(queryp.date_to.substr(0,13));
+            }
+
+            if (conditions.length > 0) {
+                query.push('WHERE ' + conditions.join(' AND '));
+            }
+            else {
+                return done('Empty WHERE statement in query');
             }
 
             var query = query.join(' ');
