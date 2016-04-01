@@ -189,16 +189,17 @@ module.exports = function (options, debug_msg, on_disconnect, on_error) {
 
         search_count: function (queryp, done) {
             var query = []; // actual SQL query
-            var group = [];
 
             var params = [];
 
-            query.push('SELECT COUNT(*)');
             if (queryp.aggregation === 'hostname') {
-                group.push('hostname');
+                query.push('SELECT COUNT(DISTINCT(hostname))');
             }
             else if (queryp.aggregation === 'hour') {
-                group.push('pstart');
+                query.push('SELECT COUNT(DISTINCT(pstart))');
+            }
+            else {
+                query.push('SELECT COUNT(*)');
             }
 
             query.push('FROM stats');
@@ -228,10 +229,6 @@ module.exports = function (options, debug_msg, on_disconnect, on_error) {
             }
             else {
                 return done('Empty WHERE statement in query');
-            }
-
-            if (group.length > 0) {
-                query.push('GROUP BY ' + group.join(', '));
             }
 
             var query = query.join(' ');
