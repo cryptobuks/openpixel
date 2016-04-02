@@ -159,7 +159,7 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
         }
     }
 
-    logger.log(`Files to be processed: ${files.map((f) => path.basename(f)).join(', ')}`);
+    logger.debug(`Files to be processed: ${files.map((f) => path.basename(f)).join(', ')}`);
 
     const ccf = Math.min(files.length, config.timestamper.concurrent_files);
     logger.log(`Will process ${ccf} files concurrently`);
