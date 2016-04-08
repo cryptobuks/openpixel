@@ -83,7 +83,7 @@ module.exports = function (options, debug_msg, on_error) {
                         }
                     })
                     .on('response', function (fstream) {
-                        debug_msg(`Got successfull response stream`, fstream);
+                        debug_msg(`Got successfull response stream ` + JSON.stringify(fstream));
                         return callback(null, fstream);
                     });
                 }

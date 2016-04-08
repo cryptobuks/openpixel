@@ -21,5 +21,5 @@ module.exports = (options, debug_msg, on_error) => {
             debug_msg('dev-null.get_txid() called with journal = ' + JSON.stringify(journal));
             return done(null, `testing-${Number(new Date)}`);
         }
-    }
-}
+    };
+};

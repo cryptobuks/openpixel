@@ -130,6 +130,7 @@ module.exports = (options, debug_msg, on_error) => {
                 if (err) {
                     return done(err);
                 }
+
                 debug_msg('Returning stream in callback');
                 return done(null, fstream);
             });

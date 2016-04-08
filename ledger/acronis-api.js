@@ -62,7 +62,7 @@ module.exports = function (options, debug_msg, on_error) {
         var json = {
             metadata: new Buffer(md).toString('base64'),
             metadataContentType: 'application/json;enc=v1',
-            metadataHash: crypto.createHash('sha256').update(md).digest('hex'),
+            metadataHash: crypto.createHash('sha256').update(md).digest('base64'),
             nonce: new Buffer(Math.random().toString()).toString('base64')
         };
         req.send(`/records/${record.id}/fingerprints`, { method: 'POST', json: json, ok_code: 204 }, (err, body) => {
@@ -94,7 +94,12 @@ module.exports = function (options, debug_msg, on_error) {
                 on_error('(download_file) Request error:', err);
                 return callback(err, null);
             }
-            debug_msg('(download_file) Request completed, streaming', fstream);
+            if (!fstream.statusCode.toString().startsWith('2')) {
+                on_error('(download_file) Response code is not 2xx:', fstream.statusCode);
+                return callback(fstream.statusCode, null);
+            }
+
+            debug_msg('(download_file) Request completed, streaming ' + JSON.stringify(fstream));
             return callback(err, fstream);
         });
     }
