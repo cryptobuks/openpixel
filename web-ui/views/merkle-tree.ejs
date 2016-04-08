@@ -8,18 +8,70 @@
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js"></script>
 
 <%# from http://stackoverflow.com/questions/7558410/how-to-represent-a-binary-tree-with-tables-html -%>
-
+<style>
+    table#tree td {
+        vertical-align: middle;
+    }
+</style>
 </head>
-
+<!--
+    aE/UDnbs974OMKrzaoye7n0bWhds7BC4LUt1P+OVVJs=    IQa2ZWxZq6uc62iPo5M7KbQw8VrRWmN3IvD+kfSe5xA=    SmtR7/Ue6+BDWqbc8kHe8x79be0ySc16lXq6EvLkMiQ=
+    fDXn8VX5PQ8dnHcIIOB7U5YUnW0urLtgDlKUMzlTQss=
+    xSFRoZjtR4MuPWs3dS+ERBKkXTPzK42t9ZqaMH5MI4I=    tA/t6tT803/LvwWlKsKP9X/AQOSRcgm/NJhqfbur+qw=
+    xSFRoZjtR4MuPWs3dS+ERBKkXTPzK42t9ZqaMH5MI4I=
+-->
 <body>
     <div class="container">
         <div class="col-md6 col-md-offset3">
             <br/>
+
+            <legend>Merkle Tree <small>for <i>Pixel data stamping at 2016-03-28T15:05:53.889Z</i></small></legend>
+            <hr/>
+            <table id="tree" class="table table-bordered table-condensed">
+            <tbody>
+                <tr>
+                    <td id="0_0" rowspan="1" class="highlight"><b>test.ru</b><br/><small>aE/UDnbs974OMKrzaoye7n0bWhds7BC4LUt1P+OVVJs=</small></td>
+                    <td id="1_0" rowspan="2"><small>IQa2ZWxZq6uc62iPo5M7KbQw8VrRWmN3IvD+kfSe5xA=</small></td>
+                    <td id="2_0" rowspan="4"><b>ROOT hash</b><br/><small>SmtR7/Ue6+BDWqbc8kHe8x79be0ySc16lXq6EvLkMiQ=</small></td>
+                </tr>
+                <tr>
+                    <td id="0_1" rowspan="1" class="highlight"><b>goodhouse.ru</b><br/><small>fDXn8VX5PQ8dnHcIIOB7U5YUnW0urLtgDlKUMzlTQss=</small></td>
+                </tr>
+                <tr>
+                    <td id="0_2" rowspan="1" class="highlight"><b>cosmo.ru</b><br/><small>xSFRoZjtR4MuPWs3dS+ERBKkXTPzK42t9ZqaMH5MI4I=</small></td>
+                    <td id="1_1" rowspan="2"><small>tA/t6tT803/LvwWlKsKP9X/AQOSRcgm/NJhqfbur+qw=</small></td>
+                </tr>
+                <tr>
+                    <td id="0_3" rowspan="1"><b>random data</b><br/><small>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</small></td>
+                </tr>
+            </tbody>
+            </table>
         </div>
     </div>
 
-    <script type="text/javascript">
+<script type="text/javascript">
+    var others = {
+        '0_0': ['0_1', '1_1'],
+        '0_1': ['0_0', '1_1'],
+        '0_2': ['0_3', '1_0']
+    };
 
-    </script>
+    $(function () {
+        $('.highlight').hover(function () {
+            $(this).css('background-color', 'forestgreen').css('color', 'white');
+            var id = $(this).attr('id');
+            for (var i = 0; i < others[id].length; i++) {
+                $('#' + others[id][i]).css('background-color', 'gold');
+            }
+        }, function () {
+            $(this).css('background-color', 'white').css('color', 'black');
+            var id = $(this).attr('id');
+            console.log(id);
+            for (var i = 0; i < others[id].length; i++) {
+                $('#' + others[id][i]).css('background-color', 'white');
+            }
+        });
+    });
+</script>
 </body>
 </html>
