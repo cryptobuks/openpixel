@@ -2,10 +2,10 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <title>Search in ledger</title>
     <link rel="stylesheet" type="text/css" href="https://bootswatch.com/flatly/bootstrap.min.css">
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js"></script>
-    <title>Search in ledger</title>
 </head>
 
 <body>
@@ -374,7 +374,7 @@
                                             .addClass('btn-sm')
                                             .addClass('btn-success')
                                             .attr('role', 'button')
-                                            .attr('href', 'dlf?id=' + rows[j].id)
+                                            .attr('href', 'ledger/dlf?id=' + rows[j].id)
                                             .attr('title', 'Download log')
                                             .attr('target', '_blank')
                                             .html('<span class="glyphicon glyphicon-save-file" aria-hidden="true"></span>')
@@ -384,7 +384,7 @@
                                             .addClass('btn-sm')
                                             .addClass('btn-primary')
                                             .attr('role', 'button')
-                                            .attr('href', 'dcf?id=' + rows[j].id)
+                                            .attr('href', 'ledger/dcf?id=' + rows[j].id)
                                             .attr('title', 'Download counters')
                                             .attr('target', '_blank')
                                             .html('<span class="glyphicon glyphicon-sort-by-order-alt" aria-hidden="true"></span>')

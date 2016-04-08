@@ -2,13 +2,11 @@
 const express = require('express');
 const router = express.Router();
 const path = require('path');
-const parser = require('body-parser');
 
-module.exports = function (config, logger, counters, ledger) {
+module.exports = function (config, logger, render, counters, ledger) {
     logger.log('Mounting counters route');
-    const render = require('../render')(logger, path.join(__dirname, '../views'));
 
-    router.get('/counters', function (req, res) {
+    router.get('/', function (req, res) {
         render('counters.ejs', { config: config }, function (err, html) {
             if (err) {
                 return res.sendStatus(500);
@@ -17,7 +15,7 @@ module.exports = function (config, logger, counters, ledger) {
         });
     });
 
-    router.post('/counters/count', function (req, res) {
+    router.post('/count', function (req, res) {
         logger.debug('Count counters request: ' + JSON.stringify(req.body));
         counters.search_count(req.body, function (err, rows) {
             if (err) {
@@ -33,7 +31,7 @@ module.exports = function (config, logger, counters, ledger) {
         });
     });
 
-    router.post('/counters', function (req, res) {
+    router.post('/', function (req, res) {
         logger.debug('Search counters request: ' + JSON.stringify(req.body));
         req.body._page_size = config.web_ui.page_size;
         counters.search(req.body, function (err, rows) {

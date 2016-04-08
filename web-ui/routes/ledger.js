@@ -4,11 +4,10 @@ const router = express.Router();
 const path = require('path');
 const parser = require('body-parser');
 
-module.exports = function (config, logger, counters, ledger) {
+module.exports = function (config, logger, render, counters, ledger) {
     logger.log('Mounting ledger route');
-    const render = require('../render')(logger, path.join(__dirname, '../views'));
 
-    router.get('/ledger', function (req, res) {
+    router.get('/', function (req, res) {
         render('ledger.ejs', { config: config }, function (err, html) {
             if (err) {
                 return res.sendStatus(500);
@@ -17,7 +16,7 @@ module.exports = function (config, logger, counters, ledger) {
         });
     });
 
-    router.post('/ledger/count', function (req, res) {
+    router.post('/count', function (req, res) {
         logger.debug('Count ledger request: ' + JSON.stringify(req.body));
         counters.search_ledger_count(req.body, function (err, rows) {
             if (err) {
@@ -33,7 +32,7 @@ module.exports = function (config, logger, counters, ledger) {
         });
     });
 
-    router.post('/ledger', function (req, res) {
+    router.post('/', function (req, res) {
         logger.debug('Search ledger request: ' + JSON.stringify(req.body));
         req.body._page_size = config.web_ui.page_size;
         counters.search_ledger(req.body, function (err, rows) {
@@ -67,8 +66,6 @@ module.exports = function (config, logger, counters, ledger) {
                 res.setHeader('Content-Type', fstream.headers['content-type']);
                 // original header is ex. 'attchment; filename="www.example.com.log.gz"'
                 res.setHeader('Content-Disposition', fstream.headers['content-disposition'].replace('attchment', 'attachment'));
-
-                logger.debug('Streaming download from', fstream);
                 fstream.pipe(res);
                 logger.debug('Streaming complete');
             });
