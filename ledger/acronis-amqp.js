@@ -155,7 +155,7 @@ module.exports = (options, debug_msg, on_error, per_stamped_file) => {
             var t = 0;
             function check() {
                 t += 1;
-                if (files_sent_cnt === 0) {
+                if (files_sent_cnt <= 0) {
                     debug_msg(`All files processed`);
                     clearInterval(ii);
                     return done();
