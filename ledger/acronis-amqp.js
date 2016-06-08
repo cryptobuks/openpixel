@@ -47,14 +47,14 @@ module.exports = (options, debug_msg, on_error, per_stamped_file) => {
             }
 
             // configure AMQP first
-            debug_msg('[AMQP] Connecting to host');
+            debug_msg('(AMQP) Connecting to host');
             var amqp_conn = amqp.createConnection({ url: options.amqp.url });
             amqp_conn.on('error', function (err) {
-                on_error('[AMQP] Error', err);
+                on_error('(AMQP) Error', err);
             });
 
             amqp_conn.on('ready', function () {
-                debug_msg('[AMQP] Ready');
+                debug_msg('(AMQP) Ready');
                 amqp_conn.queue(options.amqp.queue.name, { passive: true, durable: true }, function (q) { amqp_queue = q; });
                 return done(null, { id: 0 });
             });
@@ -72,10 +72,10 @@ module.exports = (options, debug_msg, on_error, per_stamped_file) => {
                 var prep = fname.split(path.sep);
                 prep = prep.slice(prep.length - 1 - 3);
                 var keys = {
-                    Key: (type + '-' + new Buffer(prep.join('-'))).toString('base64'),
+                    Key: (new Buffer(type + '-' + prep.join('-'))).toString('base64'),
                     Body: fs.createReadStream(fname)
                 };
-                debug_msg('[S3] Key for fname ' + fname + ' = ' + keys.Key);
+                debug_msg('(S3) Key for fname ' + fname + ' = ' + keys.Key);
                 return keys;
             }
 
@@ -83,30 +83,30 @@ module.exports = (options, debug_msg, on_error, per_stamped_file) => {
             var log_file_s3 = s3_keys(log_file, 'log');
             bucket.putObject(log_file_s3, function (err, log_file_etag_obj) {
                 if (err) {
-                    on_error('[S3] Error while putting log file to bucket: ', err);
+                    on_error('(S3) Error while putting log file to bucket: ', err);
                     return done(err);
                 }
                 if ( !(log_file_etag_obj && log_file_etag_obj.ETag) ) {
-                    on_error('[S3] Empty ETage returned for log file');
+                    on_error('(S3) Empty ETage returned for log file');
                     return done(new Error('Empty ETage returned for log file'));
                 }
                 var log_file_etag = log_file_etag_obj.ETag.split('"').join('');
-                debug_msg('[S3] ETag for log file: ' + log_file_etag);
+                debug_msg('(S3) ETag for log file: ' + log_file_etag);
                 files_sent_cnt++;
 
                 // counters file
                 var counters_file_s3 = s3_keys(counters_file, 'cnt');
                 bucket.putObject(counters_file_s3, function (err, counters_file_etag_obj) {
                     if (err) {
-                        on_error('[S3] Error while putting counters file to bucket: ', err);
+                        on_error('(S3) Error while putting counters file to bucket: ', err);
                         return done(err);
                     }
                     if ( !(counters_file_etag_obj && counters_file_etag_obj.ETag) ) {
-                        on_error('[S3] Empty ETage returned for counters file');
+                        on_error('(S3) Empty ETage returned for counters file');
                         return done(new Error('Empty ETage returned for counters file'));
                     }
                     var counters_file_etag = counters_file_etag_obj.ETag.split('"').join('');
-                    debug_msg('[S3] ETag for counters file: ' + counters_file_etag);
+                    debug_msg('(S3) ETag for counters file: ' + counters_file_etag);
                     files_sent_cnt++;
 
                     return done(null, {
@@ -124,21 +124,27 @@ module.exports = (options, debug_msg, on_error, per_stamped_file) => {
 
             amqp_queue.bind('#'); // Catch all messages
             amqp_queue.subscribe(function (message) {
-                debug_msg('[AMQP] Message received: ' + JSON.stringify(message));
+                debug_msg('(AMQP) Message received: ' + JSON.stringify(message));
                 var txid = message.txid;
                 var key = message.object.key;
                 var type = key.substr(0, 3);
                 var pstart = key.substr(3, 3 + 13);
                 var hostname = get_hostname( key.substr(3 + 14) );
-                per_stamped_file(pstart, hostname, txid, function (err) {
+                debug_msg('(AMQP) Message of type ' + type + ' for hostname ' + hostname);
+                if (type === 'log') {
+                    per_stamped_file(pstart, hostname, txid, function (err) {
+                        files_sent_cnt--;
+                        if (err) {
+                            return debug_msg('Stamped file ' + hostname + ' - error: ' + err);
+                        }
+                        else {
+                            return debug_msg('Stamped file ' + hostname + ' - OK');
+                        }
+                    });
+                }
+                else {
                     files_sent_cnt--;
-                    if (err) {
-                        return debug_msg('Stamped file ' + hostname + ' - error: ' + err);
-                    }
-                    else {
-                        return debug_msg('Stamped file ' + hostname + ' - OK');
-                    }
-                });
+                }
             });
             done();
         },
