@@ -125,7 +125,7 @@ module.exports = (options, debug_msg, on_error, per_stamped_file) => {
             amqp_queue.bind('#'); // Catch all messages
             amqp_queue.subscribe(function (message) {
                 debug_msg('(AMQP) Message received: ' + JSON.stringify(message));
-                var txid = message.txid;
+                var txid = message.txid.substr(2); // remove 0x prefix
                 var key = message.object.key;
                 var type = key.substr(0, 3);
                 var pstart = key.substr(4, 13);
@@ -162,10 +162,10 @@ module.exports = (options, debug_msg, on_error, per_stamped_file) => {
                 }
 
                 if (options.txid_max_checks == null || t <= options.txid_max_checks) {
-                    debug_msg(`Files not processed yet, will check again in ${options.txid_check_interval/1000} sec.`);
+                    debug_msg(`Files not processed yet (${files_sent_cnt} left), will check again in ${options.txid_check_interval/1000} sec.`);
                 }
                 else {
-                    debug_msg(`Files not processed yet, but max checks (${options.txid_max_checks}) exceeded (${t}), will stop`);
+                    debug_msg(`Files not processed yet (${files_sent_cnt} left), but max checks (${options.txid_max_checks}) exceeded (${t}), will stop`);
                     clearInterval(ii);
                     return done('Max txid checks exceeded', null);
                 }
