@@ -349,6 +349,6 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
             for (let ccfi = 0; ccfi < ccf; ccfi++) {
                 parse_file(files[ccfi], next_file);
             }
-        });
+        }, counters_storage.per_stamped_file, function (fname) { return get_hostname(fname, ext); });
     });
 });

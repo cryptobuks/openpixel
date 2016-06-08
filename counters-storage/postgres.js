@@ -27,6 +27,12 @@ SET txid = $1::varchar
 WHERE journal_id = $2::varchar
 `;
 
+queries['per_stamped_file'] = `
+UPDATE ledger_data
+SET txid = $1::varchar, stamped = 't'
+WHERE pstart = $2::varchar, hostname = $3::varchar
+`;
+
 module.exports = function (options, debug_msg, on_disconnect, on_error) {
 
     function run_query(query_name, params, callback) {
@@ -110,10 +116,16 @@ module.exports = function (options, debug_msg, on_disconnect, on_error) {
         },
 
         acknowledge_stamp: function (journal_id, done) {
+            if (!journal_id) {
+                return done();
+            }
             run_query('acknowledge_stamp', [journal_id], done);
         },
 
         set_txid: function (journal_id, txid, done) {
+            if (!journal_id || !txid) {
+                return done();
+            }
             run_query('set_txid', [txid, journal_id], done);
         },
 
@@ -327,5 +339,12 @@ module.exports = function (options, debug_msg, on_disconnect, on_error) {
             var params = [id];
             run_query(query, params, done);
         },
+
+        per_stamped_file: function (pstart, hostname, txid, done) {
+            if (!pstart || !hostname || !txid) {
+                return done();
+            }
+            run_query('per_stamped_file', [txid, pstart, hostname], done);
+        }
     };
 };

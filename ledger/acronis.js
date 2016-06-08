@@ -108,7 +108,7 @@ module.exports = (options, debug_msg, on_error) => {
             }
 
             check();
-            setInterval(check, options.txid_check_interval);
+            ii = setInterval(check, options.txid_check_interval);
         },
 
         download: function (what, journal_id, rest, done) {
