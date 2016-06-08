@@ -128,8 +128,8 @@ module.exports = (options, debug_msg, on_error, per_stamped_file) => {
                 var txid = message.txid;
                 var key = message.object.key;
                 var type = key.substr(0, 3);
-                var pstart = key.substr(3, 3 + 13);
-                var hostname = get_hostname( key.substr(3 + 14) );
+                var pstart = key.substr(4, 13);
+                var hostname = get_hostname( key.substr(4 + 14) );
                 debug_msg('(AMQP) Message of type ' + type + ' for hostname ' + hostname);
                 if (type === 'log') {
                     per_stamped_file(pstart, hostname, txid, function (err) {

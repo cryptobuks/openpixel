@@ -30,7 +30,7 @@ WHERE journal_id = $2::varchar
 queries['per_stamped_file'] = `
 UPDATE ledger_data
 SET txid = $1::varchar, stamped = 't'
-WHERE pstart = $2::varchar, hostname = $3::varchar
+WHERE pstart = $2::varchar AND hostname = $3::varchar
 `;
 
 module.exports = function (options, debug_msg, on_disconnect, on_error) {
