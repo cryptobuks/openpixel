@@ -31,8 +31,8 @@ const https = require('https');
 const path = require('path');
 const fs = require('fs');
 
-module.exports = (options, debug_msg, on_error, per_stamped_file) => {
-    var amqp_conn, amqp_queue = [];
+module.exports = (options, debug_msg, on_error) => {
+    var amqp_conn, amqp_queue;
     var bucket;
     var per_stamped_file, get_hostname;
     var files_sent_cnt = 0;
@@ -125,7 +125,7 @@ module.exports = (options, debug_msg, on_error, per_stamped_file) => {
             amqp_queue.bind('#'); // Catch all messages
             amqp_queue.subscribe(function (message) {
                 debug_msg('(AMQP) Message received: ' + JSON.stringify(message));
-                var txid = message.txid.substr(2); // remove 0x prefix
+                var txid = message.txid;
                 var key = message.object.key;
                 var type = key.substr(0, 3);
                 var pstart = key.substr(4, 13);
@@ -155,7 +155,7 @@ module.exports = (options, debug_msg, on_error, per_stamped_file) => {
             var t = 0;
             function check() {
                 t += 1;
-                if (files_sent_cnt <= 0) {
+                if (files_sent_cnt === 0) {
                     debug_msg(`All files processed`);
                     clearInterval(ii);
                     return done();
