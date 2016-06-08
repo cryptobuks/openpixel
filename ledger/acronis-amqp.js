@@ -30,6 +30,7 @@ const aws = require('aws-sdk');
 const https = require('https');
 const path = require('path');
 const fs = require('fs');
+const base64_safe = require('base64-url');
 
 module.exports = (options, debug_msg, on_error) => {
     var amqp_conn, amqp_queue;
@@ -72,7 +73,7 @@ module.exports = (options, debug_msg, on_error) => {
                 var prep = fname.split(path.sep);
                 prep = prep.slice(prep.length - 1 - 3);
                 var keys = {
-                    Key: (new Buffer(type + '-' + prep.join('-'))).toString('base64'),
+                    Key: base64_url.encode(type + '-' + prep.join('-')),
                     Body: fs.createReadStream(fname)
                 };
                 debug_msg('(S3) Key for fname ' + fname + ' = ' + keys.Key);
