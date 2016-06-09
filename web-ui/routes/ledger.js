@@ -40,7 +40,9 @@ module.exports = function (config, logger, render, counters, ledger) {
                 logger.error('Could not process search ledger request ' + JSON.stringify(req.body) + ', err:', err);
                 return res.sendStatus(500);
             }
-            res.json({ results: rows });
+            ledger.set_tx_urls(rows, 'txid', 'txid_url', function (updated_rows) {
+                res.json({ results: updated_rows });
+            });
         });
     });
 

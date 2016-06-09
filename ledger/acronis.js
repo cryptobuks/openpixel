@@ -134,6 +134,13 @@ module.exports = (options, debug_msg, on_error) => {
                 debug_msg('Returning stream in callback');
                 return done(null, fstream);
             });
+        },
+
+        set_tx_urls: function (array, txid_field, url_field, done) {
+            for (var i = 0; i < array.length; i++) {
+                array[i][url_field] = `https://www.blocktrail.com/BTC/tx/${array[i][txid_field]}`;
+            }
+            done(array);
         }
     }
 }

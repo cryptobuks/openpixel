@@ -177,23 +177,33 @@ module.exports = (options, debug_msg, on_error) => {
         },
 
         download: function (what, journal_id, rest, done) {
+            /*
+                {
+                    "log_file_etag": "cd289ff16d674394c9cf20ceb02d87ff",
+                    "log_file_s3_key": "bG9nLTIwMTYtMDYtMDhUMTUtYWR2YW5jZS51bmFiLmNsLmxvZy5neg==",
+                    "counters_file_etag": "e25949be6f207553689fe5371d79b43e",
+                    "counters_file_s3_key": "Y250LXVidW50dS1waXhlbC1kYXRhLXByb2Nlc3NlZC1hZHZhbmNlLnVuYWIuY2wuY291bnRlcnMubG9nLmd6"
+                }
+            */
             debug_msg(`Downloading file ${what} from journal_id = ${journal_id}, rest = ${JSON.stringify(rest)}`);
-            var record = { id: rest.record_id };
-            var file_id = '';
+            var s3_key = '';
             if (what === 'log_file') {
-                file_id = rest.log_file_id;
+                s3_key = rest.log_file_s3_key;
             }
             else if (what === 'counters_file') {
-                file_id = rest.counters_file_id;
+                s3_key = rest.counters_file_s3_key;
             }
-            api.download_file(record, file_id, function (err, fstream) {
-                if (err) {
-                    return done(err);
-                }
+            debug_msg('s3_key of file to download: ' + s3_key);
+            var fstream = s3.getObject(s3_key).createReadStream();
+            debug_msg('Returning stream:', fstream);
+            done(null, fstream);
+        },
 
-                debug_msg('Returning stream in callback');
-                return done(null, fstream);
-            });
+        set_tx_urls: function (array, txid_field, url_field, done) {
+            for (var i = 0; i < array.length; i++) {
+                array[i][url_field] = `https://www.yandex.ru/${array[i][txid_field]}`;
+            }
+            done(array);
         }
     }
 };
