@@ -33,6 +33,28 @@ SET txid = $1::varchar, stamped = 't'
 WHERE pstart = $2::varchar AND hostname = $3::varchar
 `;
 
+queries['update_us_counters'] = `
+INSERT INTO usage_stat_counters (
+    report_date,
+    hostnames_count,
+    succ_stamped,
+    log_files_size,
+    counters_files_size
+)
+VALUES (
+    $1::varchar,
+    (SELECT COUNT(*) FROM ledger_data WHERE pstart = $1::varchar),
+    (SELECT COUNT(*) FROM ledger_data WHERE pstart = $1::varchar AND stamped = 't'),
+    (SELECT SUM(log_file_size) FROM ledger_data WHERE pstart = $1::varchar AND stamped = 't'),
+    (SELECT SUM(counters_file_size) FROM ledger_data WHERE pstart = $1::varchar AND stamped = 't')
+)
+`;
+
+queries['get_us_counters'] = `
+SELECT * FROM usage_stat_counters
+WHERE report_date >= $1::varchar AND report_date <= $2::varchar
+`;
+
 module.exports = function (options, debug_msg, on_disconnect, on_error) {
 
     function run_query(query_name, params, callback) {
@@ -345,6 +367,25 @@ module.exports = function (options, debug_msg, on_disconnect, on_error) {
                 return done();
             }
             run_query('per_stamped_file', [txid, pstart, hostname], done);
+        },
+
+        update_usage_stat: function (params, done) {
+            var log_time = params.log_time.substr(0,13);
+            run_query('update_us_counters', [log_time], done);
+        },
+
+        get_usage_stat: function (params, done) {
+            var dfrom = params.dfrom;
+            var dto   = params.dto;
+            run_query('get_us_counters', [dfrom, dto], function (err, rows) {
+                if (err) {
+                    return done(err);
+                }
+
+                return done(null, {
+                    counters: rows
+                });
+            });
         }
     };
 };

@@ -209,7 +209,20 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files, meta) {
                         }
 
                         logger.log('Updated txid in counters storage');
-                        return exit(failed_files.length > 0 ? 1 : 0, true);
+                        if (failed_files.length > 0) {
+                            return exit(1, true);
+                        }
+                        else {
+                            counters_storage.update_usage_stat({ log_time: log_time }, function (err) {
+                                if (err) {
+                                    logger.error(`Error updating usage stat for log time ${log_time}`, err);
+                                }
+                                else {
+                                    logger.log(`Updated usage stat for log time: ${log_time}`);
+                                }
+                                return exit(0, true);
+                            });
+                        }
                     });
                 });
             });

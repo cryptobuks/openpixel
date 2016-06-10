@@ -101,5 +101,7 @@ module.exports = {
     search_ledger:          storage.search_ledger,
     search_ledger_count:    storage.search_ledger_count,
     get_ledger_data_by_id:  storage.get_ledger_data_by_id,
-    per_stamped_file:       storage.per_stamped_file
+    per_stamped_file:       storage.per_stamped_file,
+    update_usage_stat:      storage.update_usage_stat,
+    get_usage_stat:         storage.get_usage_stat
 };
