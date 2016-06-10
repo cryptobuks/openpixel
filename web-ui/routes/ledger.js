@@ -60,16 +60,21 @@ module.exports = function (config, logger, render, counters, ledger) {
 
             var ledger_data = rows[0];
             logger.debug('Returned ledger_data = ' + JSON.stringify(ledger_data));
-            ledger.download('log_file', ledger_data.journal_id, ledger_data.rest, function (err, fstream) {
+            ledger.download('log_file', ledger_data.journal_id, ledger_data.rest, function (err, fstream, headers) {
                 if (err) {
                     logger.error('Could not get log download stream for id = ' + req.query.id + ', err:', err);
                     return res.sendStatus(500);
                 }
-                res.setHeader('Content-Type', fstream.headers['content-type']);
-                // original header is ex. 'attchment; filename="www.example.com.log.gz"'
-                res.setHeader('Content-Disposition', fstream.headers['content-disposition'].replace('attchment', 'attachment'));
+
+                if (headers) {
+                    for (var h in headers) {
+                        logger.debug(`Applying header ${h}: ${headers[h]}`);
+                        res.setHeader(h, headers[h]);
+                    }
+                }
+
                 fstream.pipe(res);
-                logger.debug('Streaming complete');
+                logger.debug('Streaming');
             });
         });
     });
@@ -88,19 +93,21 @@ module.exports = function (config, logger, render, counters, ledger) {
 
             var ledger_data = rows[0];
             logger.debug('Returned ledger_data = ' + JSON.stringify(ledger_data));
-            ledger.download('counters_file', ledger_data.journal_id, ledger_data.rest, function (err, fstream) {
+            ledger.download('counters_file', ledger_data.journal_id, ledger_data.rest, function (err, fstream, headers) {
                 if (err) {
                     logger.error('Could not get download counters stream for id = ' + req.query.id + ', err:', err);
                     return res.sendStatus(500);
                 }
 
-                res.setHeader('Content-Type', fstream.headers['content-type']);
-                // original header is ex. 'attchment; filename="www.example.com.counters.log.gz"'
-                res.setHeader('Content-Disposition', fstream.headers['content-disposition'].replace('attchment', 'attachment'));
+                if (headers) {
+                    for (var h in headers) {
+                        logger.debug(`Applying header ${h}: ${headers[h]}`);
+                        res.setHeader(h, headers[h]);
+                    }
+                }
 
-                logger.debug('Streaming download to client');
                 fstream.pipe(res);
-                logger.debug('Streaming complete');
+                logger.debug('Streaming');
             });
         });
     });

@@ -38,7 +38,7 @@ function should_run() {
 function ls(dir, ignore_dot, ext, done) {
     fs.readdir(dir, (err, all_files) => {
         if (err) {
-            return done(err, []);
+            return done(err, [], {});
         }
         var files = [];
         for (let i = 0; i < all_files.length; i++) {
@@ -53,9 +53,14 @@ function ls(dir, ignore_dot, ext, done) {
                     size: fs.statSync(fn).size
                 };
             })
-            .sort((fo1, fo2) => fo2.size - fo1.size)
-            .map((fo) => fo.name);
-        done(null, files);
+            .sort((fo1, fo2) => fo2.size - fo1.size);
+        var meta = {};
+        for (let i = 0; i < files.length; i++) {
+            meta[files[i].name] = {
+                size: files[i].size
+            };
+        }
+        done(null, files.map((fo) => fo.name), meta);
     });
 }
 
@@ -139,7 +144,7 @@ const ledger = require('../ledger');
 
 logger.log(`Reading files in folder ${config.timestamper.logs_folder}`);
 
-ls(config.timestamper.logs_folder, true, ext, function (err, files) {
+ls(config.timestamper.logs_folder, true, ext, function (err, files, meta) {
     if (err) {
         if (err.code === 'ENOENT') {
             logger.error(`Logs folder does not exist ${config.timestamper.logs_folder}`);
@@ -310,7 +315,9 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files) {
                             logger.log(`Storage updated for ${hostname}, ${utils.hrt2sec(dur)} elapsed`);
 
                             dur = process.hrtime();
-                            counters_storage.save_ledger_data(log_time, hostname, journal.id, rest, function (err) {
+                            var log_fsize = meta[fname].size;
+                            var counters_fsize = fs.statSync(counters_fname).size;
+                            counters_storage.save_ledger_data(log_time, hostname, journal.id, rest, log_fsize, counters_fsize, function (err) {
                                 dur = process.hrtime(dur);
                                 if (err) {
                                     logger.error(`Error saving ledger data for ${hostname}:`, err);

@@ -69,19 +69,18 @@ module.exports = (options, debug_msg, on_error) => {
         add: function (journal, log_file, counters_file, done) {
             debug_msg('Adding files ' + log_file + ', ' + counters_file + ' to journal ' + journal.id);
 
-            function s3_keys(fname, type) {
-                var prep = fname.split(path.sep);
-                prep = prep.slice(prep.length - 1 - 3);
-                var keys = {
-                    Key: base64_url.encode(type + '-' + prep.join('-')),
-                    Body: fs.createReadStream(fname)
-                };
-                debug_msg('(S3) Key for fname ' + fname + ' = ' + keys.Key);
-                return keys;
-            }
-
             // log file
-            var log_file_s3 = s3_keys(log_file, 'log');
+            var date_stamp = []; // stamp to use with counters file
+
+            var log_file_s3 = {};
+            var prep = log_file.split(path.sep);
+            prep = prep.slice(prep.length - 1 - 3);
+            date_stamp = prep.slice(0,3);
+            log_file_s3 = {
+                Key: base64_url.encode('log-' + prep.join('-')),
+                Body: fs.createReadStream(log_file)
+            };
+            debug_msg('(S3) Key for log file ' + log_file + ' = ' + log_file_s3.Key);
             bucket.putObject(log_file_s3, function (err, log_file_etag_obj) {
                 if (err) {
                     on_error('(S3) Error while putting log file to bucket: ', err);
@@ -96,7 +95,15 @@ module.exports = (options, debug_msg, on_error) => {
                 files_sent_cnt++;
 
                 // counters file
-                var counters_file_s3 = s3_keys(counters_file, 'cnt');
+                // var counters_file_s3 = s3_keys(counters_file, 'cnt');
+                var counters_file_s3 = {};
+                var prep = counters_file.split(path.sep);
+                prep = date_stamp.concat(prep.slice(prep.length - 1));
+                counters_file_s3 = {
+                    Key: base64_url.encode('cnt-' + prep.join('-')),
+                    Body: fs.createReadStream(log_file)
+                };
+                debug_msg('(S3) Key for cnt file ' + counters_file + ' = ' + counters_file_s3.Key);
                 bucket.putObject(counters_file_s3, function (err, counters_file_etag_obj) {
                     if (err) {
                         on_error('(S3) Error while putting counters file to bucket: ', err);
@@ -193,15 +200,25 @@ module.exports = (options, debug_msg, on_error) => {
             else if (what === 'counters_file') {
                 s3_key = rest.counters_file_s3_key;
             }
+            var original_fname = (base64_url.decode(s3_key)).substr(18);
             debug_msg('s3_key of file to download: ' + s3_key);
-            var fstream = s3.getObject(s3_key).createReadStream();
+
+            aws.config.update(options.aws);
+            options.s3.httpOptions = { agent: new https.Agent({ rejectUnauthorized: false }) }; // hack for testing
+            var bucket = new aws.S3(options.s3);
+            var fstream = bucket.getObject({ Key: s3_key }).createReadStream();
+            var headers = {
+                'Content-Type': 'application/x-gzip',
+                'Content-Disposition': `attachment; filename="${original_fname}"`
+            };
+
             debug_msg('Returning stream:', fstream);
-            done(null, fstream);
+            done(null, fstream, headers);
         },
 
         set_tx_urls: function (array, txid_field, url_field, done) {
             for (var i = 0; i < array.length; i++) {
-                array[i][url_field] = `https://www.yandex.ru/${array[i][txid_field]}`;
+                array[i][url_field] = `https://www.example.com/${array[i][txid_field]}`;
             }
             done(array);
         }

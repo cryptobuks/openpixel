@@ -131,8 +131,12 @@ module.exports = (options, debug_msg, on_error) => {
                     return done(err);
                 }
 
+                var headers = {
+                    'Content-Type': fstream.headers['content-type'],
+                    'Content-Disposition': fstream.headers['content-disposition'].replace('attchment', 'attachment')
+                };
                 debug_msg('Returning stream in callback');
-                return done(null, fstream);
+                return done(null, fstream, headers);
             });
         },
 

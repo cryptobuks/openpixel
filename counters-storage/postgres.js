@@ -11,8 +11,8 @@ DO UPDATE SET val = stats.val + $4::int
 `;
 
 queries['save_ledger_data'] = `
-INSERT INTO ledger_data(pstart, hostname, journal_id, rest)
-VALUES ($1::varchar, $2::varchar, $3::varchar, $4::jsonb)
+INSERT INTO ledger_data(pstart, hostname, journal_id, rest, log_file_size, counters_file_size)
+VALUES ($1::varchar, $2::varchar, $3::varchar, $4::jsonb, $5::int, $6::int)
 `;
 
 queries['acknowledge_stamp'] = `
@@ -101,7 +101,7 @@ module.exports = function (options, debug_msg, on_disconnect, on_error) {
             run_query('incr', [h, key_data.hostname, key_data.pathname, key_data.val], done);
         },
 
-        save_ledger_data: function (log_time, hostname, journal_id, rest, done) {
+        save_ledger_data: function (log_time, hostname, journal_id, rest, log_file_size, counters_file_size, done) {
             if (typeof log_time === 'object') {
                 var h = log_time.toISOString().substr(0, 13);
             }
@@ -112,7 +112,7 @@ module.exports = function (options, debug_msg, on_disconnect, on_error) {
                 var h = log_time.substr(0, 13);
             }
 
-            run_query('save_ledger_data', [h, hostname, journal_id, rest], done);
+            run_query('save_ledger_data', [h, hostname, journal_id, rest, log_file_size, counters_file_size], done);
         },
 
         acknowledge_stamp: function (journal_id, done) {
