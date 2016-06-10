@@ -127,7 +127,7 @@ module.exports = (options, debug_msg, on_error) => {
             amqp_queue.subscribe(function (message) {
                 debug_msg('(AMQP) Message received: ' + JSON.stringify(message));
                 var txid = message.txid;
-                var key = message.object.key;
+                var key = base64_url.decode(message.object.key);
                 var type = key.substr(0, 3);
                 var pstart = key.substr(4, 13);
                 var hostname = get_hostname( key.substr(4 + 14) );
