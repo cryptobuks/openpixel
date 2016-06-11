@@ -30,7 +30,11 @@ const aws = require('aws-sdk');
 const https = require('https');
 const path = require('path');
 const fs = require('fs');
-const base64_url = require('base64-url');
+// const base64_url = require('base64-url');
+const base64_url = {
+    encode: (x) => x,
+    decode: (x) => x
+};
 
 module.exports = (options, debug_msg, on_error) => {
     var amqp_conn, amqp_queue;
