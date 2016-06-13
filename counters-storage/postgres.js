@@ -53,6 +53,7 @@ VALUES (
 queries['get_us_counters'] = `
 SELECT * FROM usage_stat_counters
 WHERE report_date >= $1::varchar AND report_date <= $2::varchar
+ORDER BY report_date ASC
 `;
 
 module.exports = function (options, debug_msg, on_disconnect, on_error) {
@@ -374,10 +375,8 @@ module.exports = function (options, debug_msg, on_disconnect, on_error) {
             run_query('update_us_counters', [log_time], done);
         },
 
-        get_usage_stat: function (params, done) {
-            var dfrom = params.dfrom;
-            var dto   = params.dto;
-            run_query('get_us_counters', [dfrom, dto], function (err, rows) {
+        get_usage_stat: function (queryp, done) {
+            run_query('get_us_counters', [queryp.date_from.substr(0,13), queryp.date_to.substr(0,13)], function (err, rows) {
                 if (err) {
                     return done(err);
                 }

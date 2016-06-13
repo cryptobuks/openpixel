@@ -34,6 +34,7 @@ app.use(parser.urlencoded({ extended: true }));
 app.use(`${config.web_ui.base_path}/`, authenticate, require('./routes/index')(config, logger, render));
 app.use(`${config.web_ui.base_path}/counters`, authenticate, require('./routes/counters')(config, logger, render, counters, ledger));
 app.use(`${config.web_ui.base_path}/ledger`, authenticate, require('./routes/ledger')(config, logger, render, counters, ledger));
+app.use(`${config.web_ui.base_path}/usage`, authenticate, require('./routes/usage')(config, logger, render, counters, ledger));
 app.use(`${config.web_ui.base_path}/merkle-tree`, authenticate, require('./routes/merkle-tree')(config, logger, render, counters, ledger));
 
 logger.log('Initializing counters storage');
