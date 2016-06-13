@@ -293,7 +293,7 @@
                                 var rjson = {};
                                 rjson[dcn] = dv;
                                 if (expected_columns[column_ids[i]] != 'report_date') {
-                                    totals[expected_columns[column_ids[i]]] = (totals[expected_columns[column_ids[i]]] || 0) + Number(dv);
+                                    totals[expected_columns[column_ids[i]]] = (totals[expected_columns[column_ids[i]]] || 0) + Number(rows[j][expected_columns[column_ids[i]]]);
                                 }
                                 tr.append($('<td></td>').text(dv));
                                 tjson.push(rjson);
@@ -306,7 +306,7 @@
                         tr.append($('<th></th>').text('TOTAL'));
                         for (var i = 0; i < column_ids.length; i++) {
                             if (expected_columns[column_ids[i]] != 'report_date') {
-                                var dv = totals[expected_columns[column_ids[i]]];
+                                var dv = transformations[column_ids[i]](totals[expected_columns[column_ids[i]]]);
                                 tr.append($('<th></th>').text(dv));
                             }
                         }
