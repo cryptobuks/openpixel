@@ -247,7 +247,7 @@
                         'Hosts',
                         'Successfully stamped',
                         'Log files size, GB',
-                        'Counters files size, MB'
+                        'Counters files size, GB'
                     ];
                     var transformations = [
                         function (v) {
@@ -258,7 +258,7 @@
                         function (v) { return v; },
                         function (v) { return v; },
                         function (v) { return (Number(v)/(1024*1024)).toFixed(3); },
-                        function (v) { return (Number(v)/(1024)).toFixed(3); }
+                        function (v) { return (Number(v)/(1024*1024)).toFixed(3); }
                     ];
                     var tjson = [];
 
@@ -280,22 +280,38 @@
                             thead.find('tr').append($('<th></th>').text(dcn));
                         }
                         table.append(thead);
+                        var totals = {};
                         // tbody
                         var tbody = $('<tbody></tbody');
                         //// main columns
                         for (var j = 0; j < rows.length; j++) {
                             var tr = $('<tr></tr>').addClass('clickable-row');
                             for (var i = 0; i < column_ids.length; i++) {
+                                console.log(expected_columns[column_ids[i]]);
                                 var dcn = displayed_columns[column_ids[i]];
                                 var dv = transformations[column_ids[i]](rows[j][expected_columns[column_ids[i]]]);
                                 var rjson = {};
                                 rjson[dcn] = dv;
+                                if (expected_columns[column_ids[i]] != 'report_date') {
+                                    totals[expected_columns[column_ids[i]]] = (totals[expected_columns[column_ids[i]]] || 0) + Number(dv);
+                                }
                                 tr.append($('<td></td>').text(dv));
                                 tjson.push(rjson);
                             }
                             tbody.append(tr);
                         }
                         table.append(tbody);
+                        var tfoot = $('<tfoot></tfoot>');
+                        var tr = $('<tr></tr>');
+                        tr.append($('<th></th>').text('TOTAL'));
+                        for (var i = 0; i < column_ids.length; i++) {
+                            if (expected_columns[column_ids[i]] != 'report_date') {
+                                var dv = totals[expected_columns[column_ids[i]]];
+                                tr.append($('<th></th>').text(dv));
+                            }
+                        }
+                        tfoot.append(tr);
+                        table.append(tfoot);
                     }
                     $('#results').show();
 
