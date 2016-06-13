@@ -251,7 +251,7 @@
                     ];
                     var transformations = [
                         function (v) {
-                            var t = new Date(v.split('-').join('/').split('T').join(' ') + ':00:00.000Z');
+                            var t = new Date(v + ':00:00.000Z');
                             t = new Date(Number(t) - tzoffset_min*60*1000);
                             return t.toISOString().substr(0,13).split('-').join('/').split('T').join(' ') + ':00';
                         },
@@ -287,7 +287,6 @@
                         for (var j = 0; j < rows.length; j++) {
                             var tr = $('<tr></tr>').addClass('clickable-row');
                             for (var i = 0; i < column_ids.length; i++) {
-                                console.log(expected_columns[column_ids[i]]);
                                 var dcn = displayed_columns[column_ids[i]];
                                 var dv = transformations[column_ids[i]](rows[j][expected_columns[column_ids[i]]]);
                                 var rjson = {};
@@ -301,6 +300,7 @@
                             tbody.append(tr);
                         }
                         table.append(tbody);
+
                         var tfoot = $('<tfoot></tfoot>');
                         var tr = $('<tr></tr>');
                         tr.append($('<th></th>').text('TOTAL'));
