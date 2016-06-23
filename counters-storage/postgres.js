@@ -85,7 +85,7 @@ module.exports = function (options, debug_msg, on_disconnect, on_error) {
             client.query(q, params, function (err, result) {
                 pgdone();
                 // this is a workaround
-                if (err && err.code !== '23505') {
+                if (err && err.code === '23505') {
                     err = null;
                     result = {
                         rows: []
