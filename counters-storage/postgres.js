@@ -84,7 +84,7 @@ module.exports = function (options, debug_msg, on_disconnect, on_error) {
 
             client.query(q, params, function (err, result) {
                 pgdone();
-                if (err) {
+                if (err && err.code !== '23505') {
                     if (prepared) {
                         on_error(`Query ${query_name} with qid = ${qid} and params = ${JSON.stringify(params)} completed with errors`, err);
                     }
