@@ -56,6 +56,27 @@ WHERE report_date >= $1::varchar AND report_date <= $2::varchar
 ORDER BY report_date ASC
 `;
 
+queries['queue_get_files'] = `
+SELECT * FROM files_queue
+WHERE status = 'new' OR status = 'failed'
+`;
+
+queries['queue_file_ok'] = `
+UPDATE files_queue
+SET status = 'ok'
+WHERE fname = $1::varchar
+`;
+
+queries['queue_file_failed'] = `
+UPDATE files_queue
+SET status = 'failed'
+WHERE fname = $1::varchar
+`;
+
+queries['queue_clear_ok'] = `
+DELETE FROM files_queue WHERE status = 'ok'
+`;
+
 module.exports = function (options, debug_msg, on_disconnect, on_error) {
 
     function run_query(query_name, params, callback) {
@@ -393,6 +414,29 @@ module.exports = function (options, debug_msg, on_disconnect, on_error) {
                     counters: rows
                 });
             });
+        },
+
+        queue_get_files: function (done) {
+            run_query('queue_get_files', [], done);
+        },
+
+        queue_file_ok: function (fname, done) {
+            run_query('queue_file_ok', [fname], done);
+        },
+
+        queue_file_failed: function (fname, done) {
+            run_query('queue_file_failed', [fname], done);
+        },
+
+        queue_clear_ok: function (done) {
+            run_query('queue_clear_ok', [], done);
+        },
+
+        queue_insert_new: function (fnames, done) {
+            var q = '';
+            q += 'INSERT INTO files_queue (fname) ';
+            q += 'VALUES (\'' + fnames.join('\'),\n(\'') + '\')';
+            run_query(q, [], done);
         }
     };
 };

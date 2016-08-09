@@ -44,6 +44,7 @@ module.exports = {
         missing_ok: false,
         concurrent_files: 1,
         max_failed_files: null,
+        files_source: 'ls',
         logs_folder: './requests',
         extension: 'log.gz',
         processed_counters_folder: './processed'

@@ -103,5 +103,10 @@ module.exports = {
     get_ledger_data_by_id:  storage.get_ledger_data_by_id,
     per_stamped_file:       storage.per_stamped_file,
     update_usage_stat:      storage.update_usage_stat,
-    get_usage_stat:         storage.get_usage_stat
+    get_usage_stat:         storage.get_usage_stat,
+    queue_file_ok:          storage.queue_file_ok,
+    queue_file_failed:      storage.queue_file_failed,
+    queue_get_files:        storage.queue_get_files,
+    queue_clear_ok:         storage.queue_clear_ok,
+    queue_insert_new:       storage.queue_insert_new
 };

@@ -35,33 +35,85 @@ function should_run() {
     return false;
 }
 
-function ls(dir, ignore_dot, ext, done) {
-    fs.readdir(dir, (err, all_files) => {
-        if (err) {
-            return done(err, [], {});
-        }
+var ls, file_ok, file_failed;
+if (config.timestamper.files_source === 'amqp') {
+    var amqp = require('amqp');
+    logger.log('ls = amqp');
+    ls = function (_uu1, _uu2, _uu3, done) {
+        logger.log(`Reading files from amqp queue ${config.timestamper.amqp_queue} in ${config.timestamper.amqp_url}`);
+        var files_length_prev = 0;
         var files = [];
-        for (let i = 0; i < all_files.length; i++) {
-            if ((ignore_dot || all_files[i].startsWith('.')) && (!ext || all_files[i].endsWith(`.${ext}`))) {
-                files.push(path.join(config.timestamper.logs_folder, all_files[i]));
+
+        var amqp_conn, amqp_queue, qlc;
+
+        var amqp_conn = amqp.createConnection({ url: config.timestamper.amqp_url });
+        amqp_conn.on('error', function (err) {
+            logger.error('AMQP error', err);
+            clearInterval(qlc);
+            amqp_conn.disconnect();
+            return done(err, []);
+        });
+
+        amqp_conn.on('ready', function () {
+            logger.debug('AMQP ready');
+            amqp_conn.queue(config.timestamper.amqp_queue, { passive: true, durable: true }, function (q) {
+                amqp_queue = q;
+                amqp_queue.bind('#');
+                amqp_queue.subscribe({ ack: true }, function (message) {
+                    files.push(message.data.toString());
+                    amqp_queue.shift();
+                });
+
+                // checks if files.length didn't change -- assumes that all messages have been consumed for now
+                qlc = setInterval(function () {
+                    if (files_length_prev === files.length) {
+                        clearInterval(qlc);
+                        // amqp_queue.unsubscribe();
+                        amqp_conn.disconnect();
+                        return done(null, files);
+                    }
+                    else {
+                        files_length_prev = files.length;
+                    }
+                }, 500);
+            });
+        });
+    };
+    file_ok = (fname, done) => done();
+    file_failed = (fname, done) => done();
+}
+else if (config.timestamper.files_source === 'postgres') {
+    logger.log('Reading files from postgres queue');
+    ls = function (_uu1, _uu2, _uu3, done) {
+        counters_storage.queue_get_files(function (err, rows) {
+            var files = [];
+            if (rows) {
+                files = rows.map((r) => r.fname);
             }
-        }
-        files = files
-            .map((fn) => {
-                return {
-                    name: fn,
-                    size: fs.statSync(fn).size
-                };
-            })
-            .sort((fo1, fo2) => fo2.size - fo1.size);
-        var meta = {};
-        for (let i = 0; i < files.length; i++) {
-            meta[files[i].name] = {
-                size: files[i].size
-            };
-        }
-        done(null, files.map((fo) => fo.name), meta);
-    });
+            done(err, files);
+        });
+    };
+    file_ok = (fname, done) => counters_storage.file_ok(fname, done);
+    file_failed = (fname, done) => counters_storage.file_failed(fname, done);
+}
+else {
+    logger.log(`Reading files in folder ${dir}`);
+    ls = function (dir, ignore_dot, ext, done) {
+        fs.readdir(dir, (err, all_files) => {
+            if (err) {
+                return done(err, [], {});
+            }
+            var files = [];
+            for (let i = 0; i < all_files.length; i++) {
+                if ((ignore_dot || all_files[i].startsWith('.')) && (!ext || all_files[i].endsWith(`.${ext}`))) {
+                    files.push(path.join(config.timestamper.logs_folder, all_files[i]));
+                }
+            }
+            done(null, files);
+        });
+    };
+    file_ok = (fname, done) => done();
+    file_failed = (fname, done) => done();
 }
 
 function get_hostname(fname, ext) {
@@ -142,9 +194,7 @@ const file_reader = require('./reader')(ext);
 const counters_storage = require('../counters-storage');
 const ledger = require('../ledger');
 
-logger.log(`Reading files in folder ${config.timestamper.logs_folder}`);
-
-ls(config.timestamper.logs_folder, true, ext, function (err, files, meta) {
+ls(config.timestamper.logs_folder, true, ext, function (err, files) {
     if (err) {
         if (err.code === 'ENOENT') {
             logger.error(`Logs folder does not exist ${config.timestamper.logs_folder}`);
@@ -164,7 +214,35 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files, meta) {
         }
     }
 
-    logger.debug(`Files to be processed: ${files.map((f) => path.basename(f)).join(', ')}`);
+    files = files
+            .map((fn) => {
+                return {
+                    name: fn,
+                    size: fs.statSync(fn).size
+                };
+            })
+            .sort((fo1, fo2) => {
+                if (fo1.name === fo2.name) {
+                    return fo2.size - fo1.size
+                }
+                else if (fo1.name < fo2.name) {
+                    return -1;
+                }
+                else if (fo1.name > fo2.name) {
+                    return +1;
+                }
+            });
+
+    var meta = {};
+    for (let i = 0; i < files.length; i++) {
+        meta[files[i].name] = {
+            size: files[i].size
+        };
+    }
+
+    files = files.map((fo) => fo.name);
+    logger.log(`Files to be processed: ${files.join(', ')}`);
+    // return exit(0, true);
 
     const ccf = Math.min(files.length, config.timestamper.concurrent_files);
     logger.log(`Will process ${ccf} files concurrently`);
@@ -314,8 +392,10 @@ ls(config.timestamper.logs_folder, true, ext, function (err, files, meta) {
                         dur = process.hrtime(dur);
                         if (err) {
                             logger.error(`Failed to add ${hostname} to ledger, err:`, err);
+                            counters_storage.queue_file_failed(fname, function () {});
                             return next_file(fname, err);
                         }
+                        counters_storage.queue_file_ok(fname, function () {});
                         logger.log(`Added ${hostname} to ledger, ${utils.hrt2sec(dur)} elapsed`);
 
                         dur = process.hrtime();
