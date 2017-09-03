@@ -141,25 +141,16 @@ function is_alphanum(str, str_length) {
 }
 
 function async_for_each(array, for_each, done) {
-    var i = 0;
-    if (array.length === 0) {
-        return done();
-    }
+    if (array.length === 0) return done();
 
+    var i = -1;
     function next(err) {
-        if (err) {
-            return done(err);
-        }
-
-        if (i === array.length - 1) {
-            return done();
-        }
-
+        if (err) return done(err);
+        if (i === array.length - 1) return done();
         i += 1;
-        for_each(array[i], next);
+        setTimeout(function () { for_each(array[i], next) }, 0);
     }
-
-    for_each(array[0], next);
+    next();
 }
 
 function encrypt_str(str, alg, pass) {
