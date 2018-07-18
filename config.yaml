@@ -1,0 +1,87 @@
+pixel:
+    port: 4321
+    endpoints:
+        - /pixel.gif
+        - /1/from-ref
+    cookies:
+        sign_keys:
+            - 2WxAkYQsopajO7dFPEQn
+            - xNcr4XZyO8iRGByg5sZV
+            - Wpudme9N1hRZCqewr0JP
+            - S8GFYZRynDYwrJhJ686P
+        password: 7zeEUJraDhDBj1kTIgPNnclyrwCRF19JNDFW7xw6
+
+register:
+    folder: /home/ubuntu/pixel-data/requests
+    cache_options:
+        max: 50000
+
+timestamper:
+    logger:
+        level: 1
+    concurrent_files: 20
+    missing_ok: false
+    max_failed_files: 0
+    files_source: postgres
+    processed_counters_folder: /home/ubuntu/pixel-data/processed
+
+counters_storage:
+    logger:
+       level: 1
+    type: postgres
+    options:
+        user: pixel
+        password: AllSystems1
+        host: localhost
+        port: 5432
+        database: pixel_new
+
+#ledger:
+#    logger:
+#        level: 0
+#    type: acronis
+#   # type: dev-null
+#    base_url: http://localhost:8080/api
+#    options:
+#        timeout: 60000
+#        user:
+#            email: pixel-ledger@probtn.com
+#            accessKey: c68892ab-df94-4856-a009-1cca08e20a48
+#            accessSecret: eyJraWQiOiJrZXkiLCJhbGciOiJSUzI1NiIsImFjY2Vzc1Rva2VuSWQiOiJjNjg4OTJhYi1kZjk0LTQ4NTYtYTAwOS0xY2NhMDhlMjBhNDgifQ.eyJzY29wZXMiOlsiQUNDRVNTX1RPS0VOIl0sImp0aSI6IjVHbDZGYWJDYzk4dlUyMDZFZjd6cXciLCJpYXQiOjE0NTgyMzIzNzUsImlzcyI6IkFjcm9uaXMgTGVkZ2VyIn0.dnd-lc-NQ5oTaR4ua-h8Tlohne9fiR7_PTsRBJCAhVzAyV4blJ1n26jHO7ZwTMQSNOnyW6Q9Ci6WlQtBInC2BgbEzFFsEIzaXYD9h1aZBnxN2RMeNDhmwDO3sFEqfmmyqAbLMSe1ohdYzNHNAHADTvhWN-otyOY5T610SOAzGYk2QAEOPO8gIs4b91j5XRlPCzpGvplq5v_TyNqPvH3aF5z8sp4xF3BTQS1DlDd6Fec-KqD_u6CgF9fpCnGu1v4wz4Z7Hdr0TeFp3YJ9H1eLm3tSWRI03aBvWRCv_OyZ2PexPZwJh4eoapgHIaXRR3P2gxci2T9Bqhw0IAOOajISTw
+
+ledger:
+    logger:
+        level: 0
+    type: acronis-amqp
+    options:
+        txid_max_checks: 30
+        txid_check_interval: 10000
+        aws:
+            accessKeyId: ce531758f7fb3c04EZVL
+            secretAccessKey: nvKvxMIjPUTvqAHl9Elf6rDFJUG7S56LIEtfB2NL
+
+        s3:
+            endpoint: ostor1
+            apiVersion: '2006-03-01'
+            params:
+                Bucket: testb
+
+        amqp:
+            url: amqp://guest:guest@localhost:5672
+            queue:
+                name: outgoing
+
+web_ui:
+    logger:
+        level: 0
+    auth:
+        type: basic
+        options:
+            realm: pixel.probtn.com
+            users:
+                - name: bis
+                  pass: AllSystems1
+                - name: xaxa1
+                  pass: AllSystems1
+                - name: vd
+                  pass: 132435
